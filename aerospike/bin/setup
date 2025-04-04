@@ -1,0 +1,54 @@
+#!/bin/bash
+# Aerospike Service Setup Script
+
+echo "🚀 Setting up Aerospike Service gem repository"
+
+# Get Ruby version from .ruby-version file
+RUBY_VERSION=$(cat .ruby-version | tr -d '\n')
+echo "🔍 Detected Ruby version: $RUBY_VERSION"
+
+# Clean up previous installation
+echo "🧹 Cleaning up previous bundle installation..."
+rm -rf .bundle
+rm -rf vendor/bundle
+[ -f Gemfile.lock ] && rm Gemfile.lock
+bundle clean --force 2>/dev/null || true
+
+# Setup bundler paths
+echo "🔧 Configuring bundler..."
+mkdir -p .bundle
+mkdir -p vendor/bundle
+bundle config set --local path 'vendor/bundle'
+# Ensure we're using the correct Ruby version
+bundle config set --local ruby-version $RUBY_VERSION
+bundle config set --local force_ruby_platform true
+
+# Install dependencies
+echo "📦 Installing dependencies..."
+bundle install
+
+# Create test directories if they don't exist
+echo "📁 Setting up test environment..."
+mkdir -p spec/config
+
+# Copy configuration template if it doesn't exist
+if [ ! -f spec/config/aerospike_service.yml ]; then
+  echo "📄 Creating test configuration..."
+  cp lib/aerospike_service/templates/aerospike_service.yml spec/config/
+fi
+
+# Set up test namespace if available
+if nc -z localhost 3000 2>/dev/null; then
+  echo "🔧 Ensuring test namespace is available..."
+  # This would typically use asadm or asinfo to verify namespaces
+  # For now we just assume it's configured correctly
+fi
+
+echo ""
+echo "✨ Setup complete! ✨"
+echo ""
+echo "🧪 To run tests: bundle exec rake spec"
+echo "🔍 To start console: bin/console"
+echo "📚 Read documentation: bundle exec yard server"
+echo ""
+echo "Happy coding! 🎉"

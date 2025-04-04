@@ -1,0 +1,60 @@
+# AerospikeService
+
+The AerospikeService gem has been installed. Here's what to do next:
+
+## Configuration
+
+A configuration file has been created at:
+  config/aerospike_service.yml
+
+Review this file and update it with your Aerospike connection settings.
+
+An initializer has also been created at:
+  config/initializers/aerospike_service.rb
+
+This initializer loads the configuration and sets up the service.
+
+## Basic Usage
+
+```ruby
+# Get a value
+user_data = AerospikeService.get("user:123")
+
+# Store a value
+AerospikeService.put("user:123", { name: "John Doe", email: "john@example.com" })
+
+# Delete a value
+AerospikeService.delete("user:123")
+
+# Check if a key exists
+if AerospikeService.exists?("user:123")
+  # Do something
+end
+
+# Increment a counter
+AerospikeService.increment("counter:visits", "count", 1)
+```
+
+## Namespace Shortcuts
+
+To create convenient shortcuts for your namespaces, run:
+
+```bash
+$ rails generate aerospike_service:shortcuts
+```
+
+This will create a module that lets you access specific namespaces directly:
+
+```ruby
+# Access the 'users' namespace
+Aerospike::Users.get("123")
+Aerospike::Users.put("123", { name: "John Doe" })
+
+# Access the 'analytics' namespace
+Aerospike::Analytics.increment("daily:visits", "count")
+```
+
+## Documentation
+
+For more information, see the gem documentation at:
+https://github.com/your-org/infrastructure_services/tree/main/aerospike

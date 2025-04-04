@@ -1,0 +1,31 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "bundler/setup"
+require "aerospike_service"
+
+# Configure for console use
+AerospikeService.configure do |config|
+  config.hosts = [{ host: "127.0.0.1", port: 3000 }]
+  config.namespaces = ["test"]
+  config.default_namespace = "test"
+end
+
+puts "AerospikeService console started"
+puts "Configuration:"
+puts "  Hosts: #{AerospikeService.configuration.hosts.inspect}"
+puts "  Default namespace: #{AerospikeService.configuration.default_namespace}"
+puts
+puts "Example usage:"
+puts "  AerospikeService.put('test:key', { value: 'hello world' })"
+puts "  AerospikeService.get('test:key')"
+puts
+
+# Load Pry if available, otherwise fall back to IRB
+begin
+  require "pry"
+  Pry.start
+rescue LoadError
+  require "irb"
+  IRB.start(__FILE__)
+end
