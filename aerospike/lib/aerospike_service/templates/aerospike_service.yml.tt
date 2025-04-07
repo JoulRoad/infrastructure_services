@@ -1,0 +1,40 @@
+default: &default
+  hosts:
+    - host: 127.0.0.1
+      port: 3000
+  default_namespace: test
+  namespaces:
+    - test
+    - users
+    - analytics
+  connect_timeout: 1.0
+  timeout: 1.0
+  max_retries: 2
+  max_connections: 10
+  namespace_configs:
+    users:
+      hosts:
+        - host: 127.0.0.1
+          port: 3000
+    analytics:
+      hosts:
+        - host: 127.0.0.1
+          port: 3000
+
+development:
+  <<: *default
+
+test:
+  <<: *default
+
+production:
+  hosts: <%= ENV.fetch("AEROSPIKE_HOSTS", "127.0.0.1:3000") %>
+  default_namespace: <%= ENV.fetch("AEROSPIKE_DEFAULT_NAMESPACE", "test") %>
+  namespaces:
+    - <%= ENV.fetch("AEROSPIKE_DEFAULT_NAMESPACE", "test") %>
+    - users
+    - analytics
+  connect_timeout: <%= ENV.fetch("AEROSPIKE_CONNECT_TIMEOUT", 5.0) %>
+  timeout: <%= ENV.fetch("AEROSPIKE_TIMEOUT", 3.0) %>
+  max_retries: <%= ENV.fetch("AEROSPIKE_MAX_RETRIES", 3) %>
+  max_connections: <%= ENV.fetch("AEROSPIKE_MAX_CONNECTIONS", 25) %>

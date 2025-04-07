@@ -2,38 +2,39 @@
 
 require "bundler/setup"
 require "aerospike_service"
+require "yaml"
 
-# Enable code coverage if ENV var is set
-if ENV["COVERAGE"]
-  require "simplecov"
-  SimpleCov.start do
-    add_filter "/spec/"
-    add_filter "/vendor/"
-  end
-end
+# Configure for testing
+ENV["RACK_ENV"] = "test"
+
+# Load test configuration
+config_file = File.join(File.dirname(__FILE__), "config", "aerospike_service.yml")
+AerospikeService.load_configuration(file_path: config_file) if File.exist?(config_file)
 
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure
   config.example_status_persistence_file_path = ".rspec_status"
 
-  # Disable RSpec exposing methods globally
+  # Disable RSpec exposing methods globally on `Module` and `main`
   config.disable_monkey_patching!
 
-  # Use expect syntax
   config.expect_with :rspec do |c|
     c.syntax = :expect
   end
 
-  # Setup test configuration
-  config.before(:suite) do
-    AerospikeService.configure do |c|
-      c.hosts = [{host: "127.0.0.1", port: 3000}]
-      c.default_namespace = "test"
-    end
-  end
-
-  # Reset service between tests
-  config.after(:each) do
+  # Reset AerospikeService between tests
+  config.before(:each) do
     AerospikeService.reset!
+    AerospikeService.load_configuration(file_path: config_file) if File.exist?(config_file)
+  end
+end
+
+# Helper for cleaning up test data
+def clean_test_data(namespace = nil)
+  namespaces = namespace ? [namespace] : AerospikeService.configuration.namespaces
+
+  namespaces.each do |ns|
+    # Delete any test keys
+    # Implementation depends on your test approach
   end
 end

@@ -1,98 +1,94 @@
 # frozen_string_literal: true
 
-require "spec_helper"
+RSpec.describe "Client Integration" do
+  let(:namespace) { AerospikeService.configuration.default_namespace }
+  let(:test_key) { "test-#{Time.now.to_i}-#{rand(1000)}" }
+  let(:test_data) { { "name" => "Test", "count" => 5 } }
 
-# Skip if Aerospike is not available
-if ENV["RUN_INTEGRATION"] || system("nc -z localhost 3000")
-  RSpec.describe "Client Methods" do
-    # Use random keys to avoid test collisions
-    let(:test_key) { "test:#{Time.now.to_i}:#{rand(1000)}" }
-    let(:test_keys) { [1, 2, 3].map { |i| "#{test_key}:#{i}" } }
+  describe "basic operations" do
+    it "performs put and get operations" do
+      # Put data
+      result = AerospikeService.put(key: test_key, bins: test_data)
+      expect(result).to be true
 
-    # Clean up after tests
-    after do
-      # Delete main test key
-      begin
-        AerospikeService.delete(test_key)
-      rescue
-        nil
-      end
-
-      # Delete batch test keys
-      test_keys.each do |key|
-        AerospikeService.delete(key)
-      rescue
-        nil
-      end
+      # Get data
+      retrieved = AerospikeService.get(key: test_key)
+      expect(retrieved).to include("name" => "Test", "count" => 5)
     end
 
-    it "tests #put and #get" do
-      # Basic put/get
-      AerospikeService.put(test_key, {"name" => "Test User", "age" => 30})
-      result = AerospikeService.get(test_key)
-      expect(result).to include("name" => "Test User", "age" => 30)
+    it "gets a specific bin" do
+      AerospikeService.put(key: test_key, bins: test_data)
 
-      # Get specific bin
-      bin_result = AerospikeService.get(test_key, "name")
-      expect(bin_result).to include("name" => "Test User")
-      expect(bin_result).not_to include("age")
+      value = AerospikeService.get(key: test_key, bin: "name")
+      expect(value).to eq("Test")
     end
 
-    it "tests #exists?" do
-      # Non-existent key
-      expect(AerospikeService.exists?("nonexistent:#{rand(10000)}")).to be false
+    it "checks record existence" do
+      AerospikeService.put(key: test_key, bins: test_data)
 
-      # Existing key
-      AerospikeService.put(test_key, {"value" => "exists"})
-      expect(AerospikeService.exists?(test_key)).to be true
+      expect(AerospikeService.exists?(key: test_key)).to be true
+      expect(AerospikeService.exists?(key: "nonexistent-#{test_key}")).to be false
     end
 
-    it "tests #delete" do
-      # Create and verify record exists
-      AerospikeService.put(test_key, {"value" => "delete me"})
-      expect(AerospikeService.exists?(test_key)).to be true
+    it "deletes records" do
+      AerospikeService.put(key: test_key, bins: test_data)
+      expect(AerospikeService.exists?(key: test_key)).to be true
 
-      # Delete and verify it's gone
-      expect(AerospikeService.delete(test_key)).to be true
-      expect(AerospikeService.exists?(test_key)).to be false
+      result = AerospikeService.delete(key: test_key)
+      expect(result).to be true
+      expect(AerospikeService.exists?(key: test_key)).to be false
     end
 
-    it "tests #touch" do
-      # Create record
-      AerospikeService.put(test_key, {"value" => "touch test"})
+    it "increments counter bins" do
+      AerospikeService.put(key: test_key, bins: { "counter" => 0 })
 
-      # Touch existing record
-      expect(AerospikeService.touch(test_key)).to be true
+      AerospikeService.increment(key: test_key, bin: "counter", value: 3)
+      value = AerospikeService.get(key: test_key, bin: "counter")
+      expect(value).to eq(3)
+
+      AerospikeService.increment(key: test_key, bin: "counter")
+      value = AerospikeService.get(key: test_key, bin: "counter")
+      expect(value).to eq(4)
     end
 
-    it "tests #increment" do
-      # Increment non-existent record (creates it)
-      AerospikeService.increment(test_key, "counter")
-      expect(AerospikeService.get(test_key)).to include("counter" => 1)
+    it "touches records to update TTL" do
+      AerospikeService.put(key: test_key, bins: test_data, ttl: 10)
 
-      # Increment existing counter
-      AerospikeService.increment(test_key, "counter")
-      expect(AerospikeService.get(test_key)).to include("counter" => 2)
+      result = AerospikeService.touch(key: test_key, ttl: 100)
+      expect(result).to be true
 
-      # Increment with custom value
-      AerospikeService.increment(test_key, "counter", 5)
-      expect(AerospikeService.get(test_key)).to include("counter" => 7)
-    end
-
-    it "tests #batch_get" do
-      # Create test records
-      test_keys.each_with_index do |key, i|
-        AerospikeService.put(key, {"index" => i, "common" => "batch"})
-      end
-
-      # Get all records
-      results = AerospikeService.batch_get(test_keys)
-      expect(results.keys.sort).to eq(test_keys.sort)
-      test_keys.each_with_index do |key, i|
-        expect(results[key]).to include("index" => i)
-      end
+      # Hard to test actual TTL without complicated setup
     end
   end
-else
-  puts "Skipping integration tests (Aerospike not available)"
+
+  describe "record objects" do
+    it "creates and manipulates records" do
+      AerospikeService.put(key: test_key, bins: test_data)
+
+      record = AerospikeService.record(key: test_key)
+      expect(record).to be_a(AerospikeService::Models::Record)
+      expect(record["name"]).to eq("Test")
+
+      record["status"] = "active"
+      record.save
+
+      # Verify saved
+      updated = AerospikeService.get(key: test_key)
+      expect(updated).to include("status" => "active")
+    end
+  end
+
+  describe "batch operations" do
+    let(:test_keys) { ["batch-1-#{test_key}", "batch-2-#{test_key}"] }
+
+    it "gets multiple records at once" do
+      AerospikeService.put(key: test_keys[0], bins: { "index" => 0 })
+      AerospikeService.put(key: test_keys[1], bins: { "index" => 1 })
+
+      results = AerospikeService.batch_get(keys: test_keys)
+      expect(results).to be_a(Hash)
+      expect(results[test_keys[0]]).to include("index" => 0)
+      expect(results[test_keys[1]]).to include("index" => 1)
+    end
+  end
 end

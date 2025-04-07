@@ -4,18 +4,15 @@ module AerospikeService
   # Base error class for all AerospikeService errors
   class Error < StandardError; end
 
-  # Error raised when there's a problem with the configuration
-  class ConfigurationError < Error; end
+  # Configuration errors
+  class ConfigError < Error; end
 
-  # Error raised when there's a problem connecting to the Aerospike server
+  # Connection errors
   class ConnectionError < Error; end
 
-  # Error raised when a record is not found
+  # Operation errors
+  class OperationError < Error; end
+
+  # Record not found
   class RecordNotFoundError < Error; end
-
-  # Error raised when there's a timeout
-  class TimeoutError < Error; end
-
-  # Error raised when there's a problem with the data
-  class DataError < Error; end
 end

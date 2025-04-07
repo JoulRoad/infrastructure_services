@@ -1,83 +1,76 @@
 # frozen_string_literal: true
 
 require "aerospike"
-require "connection_pool"
-require "active_support/core_ext/hash/indifferent_access"
-require "active_support/core_ext/module/delegation"
+require "aerospike_service/version"
+require "aerospike_service/errors"
+require "aerospike_service/configuration/config"
+require "aerospike_service/configuration/loader"
+require "aerospike_service/operations/read_operations"
+require "aerospike_service/operations/write_operations"
+require "aerospike_service/operations/batch_operations"
+require "aerospike_service/client/connection_manager"
+require "aerospike_service/client/base_client"
+require "aerospike_service/client/namespace_client"
+require "aerospike_service/models/record"
 
-require_relative "aerospike_service/version"
-require_relative "aerospike_service/errors"
-require_relative "aerospike_service/config/configuration"
-require_relative "aerospike_service/connection/connection"
-require_relative "aerospike_service/connection/connection_manager"
-require_relative "aerospike_service/core/client"
-require_relative "aerospike_service/core/operations"
-require_relative "aerospike_service/core/record"
-
-# Load Rails integration if Rails is available
-require_relative "aerospike_service/rails/railtie" if defined?(Rails)
-
-# AerospikeService provides a high-level interface for working with Aerospike databases
-# in a Ruby or Rails application, with a focus on simplicity, performance, and reliability.
 module AerospikeService
   class << self
-    # @return [AerospikeService::Configuration] the current configuration instance
+    # Configuration access
     def configuration
-      @configuration ||= Configuration.new
+      @configuration ||= Configuration::Config.new
     end
 
-    # Configure the AerospikeService
-    # @yield [config] Configuration instance for setting up the service
-    # @example
-    #   AerospikeService.configure do |config|
-    #     config.hosts = [{ host: "aerospike.example.com", port: 3000 }]
-    #     config.default_namespace = "my_namespace"
-    #   end
     def configure
-      yield(configuration) if block_given?
-      @client = nil  # Reset client so it's recreated with new configuration
-      configuration
+      yield configuration if block_given?
+      self
     end
 
-    # Load configuration from a YAML file
-    # @param config_file [String, Pathname] Path to the YAML configuration file
-    # @return [AerospikeService::Configuration] the updated configuration
-    def load_configuration(config_file = nil)
-      configuration.load(config_file)
-      @client = nil  # Reset client so it's recreated with new configuration
-      configuration
+    def load_configuration(file_path:)
+      Configuration::Loader.load(file_path: file_path, config: configuration)
+      self
     end
 
-    # Access the Aerospike client instance
-    # @return [AerospikeService::Client] the client instance
+    # Connection management
+    def connection_manager
+      @connection_manager ||= Client::ConnectionManager.new(configuration: configuration)
+    end
+
+    # Namespace access
+    def namespace(name:)
+      Client::NamespaceClient.new(namespace_name: name.to_s)
+    end
+
+    # Client access
     def client
-      @client ||= Client.new(configuration)
+      @client ||= Client::BaseClient.new
     end
 
-    # Reset the client and configuration (useful for testing)
-    # @return [void]
-    def reset!
-      @configuration = nil
-      @client = nil
-    end
-
-    # Delegates missing methods to the client instance
-    # @param method_name [Symbol] Method name to delegate
-    # @param args Arguments to pass to the method
-    # @param block Block to pass to the method
-    def method_missing(method_name, *, &)
-      if client.respond_to?(method_name)
-        client.send(method_name, *, &)
+    # Delegate to client for operations
+    def method_missing(method, *args, **kwargs, &block)
+      if client.respond_to?(method)
+        client.send(method, *args, **kwargs, &block)
+      elsif configuration.namespaces.include?(method.to_s)
+        namespace(name: method)
       else
         super
       end
     end
 
-    # @param method_name [Symbol] Method name to check
-    # @param include_private [Boolean] Whether to include private methods
-    # @return [Boolean] Whether the client responds to the method
-    def respond_to_missing?(method_name, include_private = false)
-      client.respond_to?(method_name) || super
+    def respond_to_missing?(method, include_private = false)
+      client.respond_to?(method) ||
+        configuration.namespaces.include?(method.to_s) ||
+        super
+    end
+
+    # Reset all state
+    def reset!
+      @configuration = nil
+      @client = nil
+      @connection_manager&.close_all
+      @connection_manager = nil
     end
   end
+
+  # Load Rails integration if Rails is defined
+  require "aerospike_service/railtie" if defined?(Rails)
 end
