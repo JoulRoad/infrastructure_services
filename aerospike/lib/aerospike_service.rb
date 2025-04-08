@@ -46,9 +46,9 @@ module AerospikeService
     end
 
     # Delegate to client for operations
-    def method_missing(method, *args, **kwargs, &block)
+    def method_missing(method, ...)
       if client.respond_to?(method)
-        client.send(method, *args, **kwargs, &block)
+        client.send(method, ...)
       elsif configuration.namespaces.include?(method.to_s)
         namespace(name: method)
       else
