@@ -31,6 +31,10 @@ jobs:
         with:
           ruby-version: .ruby-version
           bundler-cache: true
+          working-directory: aerospike
+
+      - name: Install dependencies
+        run: bundle install
 
       - name: Format code
         run: bundle exec standardrb --fix
@@ -58,6 +62,10 @@ jobs:
         with:
           ruby-version: .ruby-version
           bundler-cache: true
+          working-directory: aerospike
+
+      - name: Install dependencies
+        run: bundle install
 
       - name: Lint code for consistent style
         run: bundle exec standardrb --no-fix
