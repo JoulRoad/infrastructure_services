@@ -7,29 +7,23 @@ module AerospikeService
         namespace ||= current_namespace
         connection = connection_for_namespace(namespace)
 
-        # Ensure key is a string
         key_str = key.to_s
 
-        # Use "test" instead of nil for set name
         aerospike_key = Aerospike::Key.new(namespace, "test", key_str)
-        options = bin ? [bin.to_s] : nil  # Use bin array for bin_names
+        options = bin ? [bin.to_s] : nil
 
         begin
-          # Use positional arguments for Aerospike 2.7.0
           record = options ? connection.get(aerospike_key, options) : connection.get(aerospike_key)
           return nil unless record
 
-          # If only one bin requested, return just that bin's value
           if bin && record.bins.key?(bin.to_s)
             record.bins[bin.to_s]
           else
             record.bins
           end
         rescue Aerospike::Exceptions::Aerospike => e
-          # In Aerospike 2.7.0, record not found is an Aerospike exception
           return nil if e.message.include?("not found")
 
-          # For testing, return nil on invalid namespace rather than failing
           if e.message.include?("Invalid namespace")
             warn "Warning: Invalid namespace '#{namespace}'. Please check your Aerospike configuration."
             return nil
@@ -45,19 +39,15 @@ module AerospikeService
         namespace ||= current_namespace
         connection = connection_for_namespace(namespace)
 
-        # Ensure key is a string
         key_str = key.to_s
 
-        # Use "test" instead of nil for set name
         aerospike_key = Aerospike::Key.new(namespace, "test", key_str)
 
         begin
-          # Use positional arguments for Aerospike 2.7.0
           connection.exists(aerospike_key)
         rescue Aerospike::Exceptions::Aerospike => e
           return false if e.message.include?("not found")
 
-          # For testing, return false on invalid namespace rather than failing
           if e.message.include?("Invalid namespace")
             warn "Warning: Invalid namespace '#{namespace}'. Please check your Aerospike configuration."
             return false

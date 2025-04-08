@@ -18,12 +18,10 @@ module AerospikeService
         @max_connections = 10
       end
 
-      # Get the hosts configuration for a specific namespace
       def hosts_for(namespace:)
         namespace_configs.dig(namespace, "hosts") || hosts
       end
 
-      # Parse a host string into a hash
       def parse_host(host_string:)
         if host_string.include?(":")
           host, port = host_string.split(":")
