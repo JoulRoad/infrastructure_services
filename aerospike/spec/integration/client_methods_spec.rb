@@ -3,7 +3,7 @@
 RSpec.describe "Client Integration" do
   let(:namespace) { AerospikeService.configuration.default_namespace }
   let(:test_key) { "test-#{Time.now.to_i}-#{rand(1000)}" }
-  let(:test_data) { { "name" => "Test", "count" => 5 } }
+  let(:test_data) { {"name" => "Test", "count" => 5} }
 
   describe "basic operations" do
     it "performs put and get operations" do
@@ -40,7 +40,7 @@ RSpec.describe "Client Integration" do
     end
 
     it "increments counter bins" do
-      AerospikeService.put(key: test_key, bins: { "counter" => 0 })
+      AerospikeService.put(key: test_key, bins: {"counter" => 0})
 
       AerospikeService.increment(key: test_key, bin: "counter", value: 3)
       value = AerospikeService.get(key: test_key, bin: "counter")
@@ -82,8 +82,8 @@ RSpec.describe "Client Integration" do
     let(:test_keys) { ["batch-1-#{test_key}", "batch-2-#{test_key}"] }
 
     it "gets multiple records at once" do
-      AerospikeService.put(key: test_keys[0], bins: { "index" => 0 })
-      AerospikeService.put(key: test_keys[1], bins: { "index" => 1 })
+      AerospikeService.put(key: test_keys[0], bins: {"index" => 0})
+      AerospikeService.put(key: test_keys[1], bins: {"index" => 1})
 
       results = AerospikeService.batch_get(keys: test_keys)
       expect(results).to be_a(Hash)

@@ -2,7 +2,7 @@
 
 RSpec.describe AerospikeService::Models::Record do
   let(:key) { "test-record" }
-  let(:bins) { { "name" => "Test", "count" => 5 } }
+  let(:bins) { {"name" => "Test", "count" => 5} }
   let(:namespace) { "test" }
   let(:record) { AerospikeService::Models::Record.new(key: key, bins: bins, namespace: namespace) }
 

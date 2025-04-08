@@ -13,8 +13,8 @@ module AerospikeService
         AerospikeService.configuration.default_namespace
       end
 
-      def connection_for_namespace(namespace:)
-        AerospikeService.connection_manager.connection_for(namespace: namespace)
+      def connection_for_namespace(namespace)
+        AerospikeService.connection_manager.connection_for(namespace)
       end
     end
   end

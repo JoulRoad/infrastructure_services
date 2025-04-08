@@ -30,7 +30,7 @@ module AerospikeService
           host = "127.0.0.1" if host == "localhost"
           {host: host, port: port.to_i}
         else
-          host = host_string == "localhost" ? "127.0.0.1" : host_string
+          host = (host_string == "localhost") ? "127.0.0.1" : host_string
           {host: host, port: 3000}
         end
       end

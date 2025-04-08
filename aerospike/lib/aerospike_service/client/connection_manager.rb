@@ -11,9 +11,9 @@ module AerospikeService
         @mutex = Mutex.new
       end
 
-      def connection_for(namespace:)
+      def connection_for(namespace)
         @mutex.synchronize do
-          @connections[namespace] ||= create_connection(namespace: namespace)
+          @connections[namespace] ||= create_connection(namespace)
         end
       end
 
@@ -26,7 +26,7 @@ module AerospikeService
 
       private
 
-      def create_connection(namespace:)
+      def create_connection(namespace)
         hosts = configuration.hosts_for(namespace: namespace)
         client_policy = Aerospike::ClientPolicy.new
         client_policy.timeout = configuration.timeout if client_policy.respond_to?(:timeout=)
@@ -35,7 +35,7 @@ module AerospikeService
           aerospike_hosts = hosts.map do |h|
             host = h.is_a?(Hash) ? (h[:host] || h["host"]) : h[:host]
             port = h.is_a?(Hash) ? (h[:port] || h["port"]) : h[:port]
-            
+
             Aerospike::Host.new(host, port)
           end
 
