@@ -2,16 +2,12 @@ PATH
   remote: .
   specs:
     aerospike_service (0.1.0)
-      activemodel (>= 6.1, < 9.0)
       activesupport (>= 6.1, < 9.0)
       aerospike (~> 2.7.0)
-      connection_pool (~> 2.4)
 
 GEM
   remote: https://rubygems.org/
   specs:
-    activemodel (8.0.2)
-      activesupport (= 8.0.2)
     activesupport (8.0.2)
       base64
       benchmark (>= 0.3)

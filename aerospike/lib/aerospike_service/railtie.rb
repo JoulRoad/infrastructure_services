@@ -5,12 +5,8 @@ module AerospikeService
     initializer "aerospike_service.configure" do |app|
       config_file = Rails.root.join("config", "aerospike_service.yml")
       if File.exist?(config_file)
-        AerospikeService.load_configuration(config_file)
+        AerospikeService.load_configuration(file_path: config_file)
       end
-    end
-
-    rake_tasks do
-      load "aerospike_service/tasks/aerospike.rake"
     end
 
     generators do

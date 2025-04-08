@@ -11,11 +11,11 @@ Gem::Specification.new do |spec|
 
   spec.summary = "Aerospike integration for Rails applications"
   spec.description = "A service-oriented adapter for Aerospike database with Rails integration, optimized for high performance and reliability"
-  spec.homepage = "https://github.com/your-org/infrastructure_services"
+  spec.homepage = "https://github.com/JoulRoad/infrastructure_services"
   spec.required_ruby_version = ">= 3.3.7"
 
   spec.metadata = {
-    "homepage_uri" => spec.homepage,
+    "homepage_uri" => "#{spec.homepage}/tree/main/aerospike",
     "source_code_uri" => "#{spec.homepage}/tree/main/aerospike",
     "changelog_uri" => "#{spec.homepage}/blob/main/aerospike/CHANGELOG.md",
     "rubygems_mfa_required" => "true"
@@ -37,9 +37,7 @@ Gem::Specification.new do |spec|
 
   # Runtime dependencies
   spec.add_dependency "aerospike", "~> 2.7.0"  # Aerospike Ruby client
-  spec.add_dependency "connection_pool", "~> 2.4"  # For connection pooling
-  spec.add_dependency "activemodel", ">= 6.1", "< 9.0"  # For validation capabilities
-  spec.add_dependency "activesupport", ">= 6.1", "< 9.0"  # For core extensions
+  spec.add_dependency "activesupport", ">= 6.1", "< 9.0"  # For ActiveSupport features
 
   # Development dependencies
   spec.add_development_dependency "bundler", "~> 2.4"
@@ -56,10 +54,10 @@ Gem::Specification.new do |spec|
   spec.post_install_message = <<~MESSAGE
     Thanks for installing AerospikeService!
 
-    To set up local bundler configuration for this project, run:
-      rails generate aerospike_service:bundle_config
-
     To set up AerospikeService configuration, run:
       rails generate aerospike_service:install
+    
+    To generate namespace shortcuts, run:
+      rails generate aerospike_service:shortcuts
   MESSAGE
 end
