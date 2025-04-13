@@ -37,17 +37,10 @@ if [ ! -f spec/config/aerospike_service.yml ]; then
   cp lib/aerospike_service/templates/aerospike_service.yml spec/config/
 fi
 
-# Set up test namespace if available
-if nc -z localhost 3000 2>/dev/null; then
-  echo "🔧 Ensuring test namespace is available..."
-  # This would typically use asadm or asinfo to verify namespaces
-  # For now we just assume it's configured correctly
-fi
-
 echo ""
 echo "✨ Setup complete! ✨"
 echo ""
-echo "🧪 To run tests: bundle exec rake spec"
+echo "🧪 To run tests: bundle exec rspec"
 echo "🔍 To start console: bin/console"
 echo "📚 Read documentation: bundle exec yard server"
 echo ""
