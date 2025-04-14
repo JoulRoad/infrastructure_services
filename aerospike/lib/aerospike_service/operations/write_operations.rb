@@ -3,8 +3,15 @@
 module AerospikeService
   module Operations
     module WriteOperations
-      def put(key:, bins:, namespace: nil, ttl: nil)
-        namespace ||= current_namespace
+
+      AS_DEFAULT_BIN_NAME = "value"
+      RECORD_TOO_BIG = "record too big"
+
+      def put(opts = {})
+        key      = opts.fetch(:key)
+        bins     = opts.fetch(:bins)
+        ttl      = opts.fetch(:ttl, nil)
+        namespace = opts.fetch(:namespace, current_namespace)
         connection = connection_for_namespace(namespace)
 
         key_str = key.to_s
@@ -42,8 +49,9 @@ module AerospikeService
         end
       end
 
-      def delete(key:, namespace: nil)
-        namespace ||= current_namespace
+      def delete(opts = {})
+        key = opts.fetch(:key)
+        namespace = opts.fetch(:namespace, current_namespace)
         connection = connection_for_namespace(namespace)
 
         key_str = key.to_s
@@ -67,8 +75,10 @@ module AerospikeService
         end
       end
 
-      def touch(key:, namespace: nil, ttl: nil)
-        namespace ||= current_namespace
+      def touch(opts = {})
+        key      = opts.fetch(:key)
+        ttl      = opts.fetch(:ttl, nil)
+        namespace = opts.fetch(:namespace, current_namespace)
         connection = connection_for_namespace(namespace)
 
         key_str = key.to_s
@@ -98,8 +108,12 @@ module AerospikeService
         end
       end
 
-      def increment(key:, bin:, value: 1, namespace: nil)
-        namespace ||= current_namespace
+      def increment(opts = {})
+        key       = opts.fetch(:key)
+        bins      = opts.fetch(:bins)
+        value     = opts.fetch(:value, 1)
+        setname   = opts.fetch(:setname, AS_DEFAULT_SETNAME)
+        namespace = opts.fetch(:namespace, current_namespace)
         connection = connection_for_namespace(namespace)
 
         key_str = key.to_s
@@ -122,7 +136,7 @@ module AerospikeService
             Rails.logger.error "Error getting record for increment: #{e.message}"
           end
 
-          connection.put(aerospike_key, {bin.to_s => current_val + value})
+          connection.put(aerospike_key, {bins.to_s => current_val + value})
           true
         rescue Aerospike::Exceptions::Aerospike => e
           if e.message.include?("Invalid namespace")
@@ -135,6 +149,44 @@ module AerospikeService
           raise OperationError, "Error incrementing record: #{e.message}"
         end
       end
+
+      def set(opts = {})
+        key = opts.fetch(:key)
+        value = opts.fetch(:value)
+        namespace = opts.fetch(:namespace, current_namespace)
+        setname = opts.fetch(:setname, AS_DEFAULT_SETNAME)
+        expiration = opts.fetch(:expiration, -1)
+        enable_convert_booleans = opts.fetch(:convert_boolean_values, false)
+
+        connection = connection_for_namespace(namespace)
+        key_str = key.to_s
+        aerospike_key = Aerospike::Key.new(namespace, setname, key_str)
+
+        unless value.is_a?(Hash)
+          value = { AS_DEFAULT_BIN_NAME => value }
+        else
+          value = value.transform_keys(&:to_s)
+        end
+
+        if enable_convert_booleans
+          value = convert_boolean_values(bins: value, bool_to_string: true)
+        end
+
+        connection.put(aerospike_key, value, expiration: expiration)
+
+        true
+
+      rescue Aerospike::Exceptions::Aerospike => e
+        if e.message == RECORD_TOO_BIG
+          $bigSessionLogger.error "Big Data is being set -> {key: #{key}, setname: #{setname}, expiration: #{expiration}}\n value => #{value}\n#{caller[0..4].join("\n")}"
+        end
+        raise OperationError, "Error setting record: #{e.message}"
+
+      rescue => e
+        raise OperationError, "Error setting record: #{e.message}"
+      end
+
+
     end
   end
 end

@@ -51,13 +51,68 @@ RSpec.describe "Namespace Integration" do
     it "supports all operations with namespaces" do
       client = AerospikeService.namespace(name: namespace1)
 
-      # Put
       client.put(key: test_key, bins: {"count" => 0})
       expect(client.get(key: test_key)).to include("count" => 0)
 
-      # Delete
       client.delete(key: test_key)
       expect(client.exists?(key: test_key)).to be false
     end
+
+    it "supports mget with multiple keys" do
+      client = AerospikeService.namespace(name: namespace1)
+
+      keys = ["#{test_key}-1", "#{test_key}-2", "#{test_key}-3"]
+      values = [
+        { "value" => "one" },
+        { "value" => "two" },
+        { "value" => "three" }
+      ]
+
+      keys.each_with_index do |key, idx|
+        client.set(key: key, value: values[idx])
+      end
+
+      result = client.mget(keys: keys)
+
+      expect(result.size).to eq(3)
+      expect(result[0]).to include("value" => "one")
+      expect(result[1]).to include("value" => "two")
+      expect(result[2]).to include("value" => "three")
+
+      keys.each { |key| client.delete(key: key) }
+    end
   end
+
+  describe "custom client methods in namespace" do
+    let(:client) { AerospikeService.namespace(name: namespace1) }
+
+    it "sets and gets values using #set and #get" do
+      key = "#{test_key}-set-get"
+      value = { "score" => 42 }
+
+      client.set(key: key, value: value)
+      result = client.get(key: key)
+
+      expect(result).to include("score" => 42)
+    end
+
+    it "handles by_rank_range_map_bin correctly" do
+      key = "#{test_key}-rank-range"
+      map_bin = "rankings"
+
+      client.set(
+        key: key,
+        value: { map_bin => { "a" => 1, "b" => 2, "c" => 3 } }
+      )
+
+      result = client.by_rank_range_map_bin(
+        key: key,
+        bin: map_bin,
+        begin_token: 0,
+        count: 2
+      )
+      expect(result).to include(["a", -1], ["b", -2])
+    end
+  end
+
 end
