@@ -1,0 +1,8 @@
+source "https://rubygems.org"
+
+gemspec
+gem "aerospike", "~> 0.1"  # Your custom gem
+gem "redis", "~> 0.1"      # Your custom gem
+gem "solr", "~> 0.1"       # Your custom gem
+gem "rest_api", "~> 0.1"   # Your custom gem
+gem "rspec"                # For specs
