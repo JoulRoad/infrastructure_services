@@ -6,11 +6,12 @@ module AerospikeService
 
       AS_DEFAULT_BIN_NAME = "value"
       RECORD_TOO_BIG = "record too big"
+      AS_DEFAULT_SETNAME = "test"
 
       def put(opts = {})
-        key      = opts.fetch(:key)
-        bins     = opts.fetch(:bins)
-        ttl      = opts.fetch(:ttl, nil)
+        key = opts.fetch(:key)
+        bins = opts.fetch(:bins)
+        ttl = opts.fetch(:ttl, nil)
         namespace = opts.fetch(:namespace, current_namespace)
         connection = connection_for_namespace(namespace)
 
@@ -110,9 +111,8 @@ module AerospikeService
 
       def increment(opts = {})
         key       = opts.fetch(:key)
-        bins      = opts.fetch(:bins)
+        bin      = opts.fetch(:bin)
         value     = opts.fetch(:value, 1)
-        setname   = opts.fetch(:setname, AS_DEFAULT_SETNAME)
         namespace = opts.fetch(:namespace, current_namespace)
         connection = connection_for_namespace(namespace)
 
@@ -136,7 +136,7 @@ module AerospikeService
             Rails.logger.error "Error getting record for increment: #{e.message}"
           end
 
-          connection.put(aerospike_key, {bins.to_s => current_val + value})
+          connection.put(aerospike_key, {bin.to_s => current_val + value})
           true
         rescue Aerospike::Exceptions::Aerospike => e
           if e.message.include?("Invalid namespace")

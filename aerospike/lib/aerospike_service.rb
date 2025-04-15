@@ -69,6 +69,7 @@ module AerospikeService
       @connection_manager&.close_all
       @connection_manager = nil
     end
+
   end
 
   # Load Rails integration if Rails is defined

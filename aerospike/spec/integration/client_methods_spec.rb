@@ -8,53 +8,56 @@ RSpec.describe "Client Integration" do
   describe "basic operations" do
     it "performs put and get operations" do
       # Put data
-      result = AerospikeService.put(opts: { key: test_key, bins: test_data })
+      result = AerospikeService.put(key: test_key, bins: test_data)
       expect(result).to be true
 
       # Get data
-      retrieved = AerospikeService.get(opts: { key: test_key })
+      retrieved = AerospikeService.get(key: test_key)
       expect(retrieved).to include("name" => "Test", "count" => 5)
     end
 
-    it "gets a specific bin" do
-      AerospikeService.put(opts: { key: test_key, bins: test_data })
 
-      value = AerospikeService.get(opts: { key: test_key, bin: "name" })
+    it "gets a specific bin" do
+      AerospikeService.put(key: test_key, bins: test_data)
+
+      value = AerospikeService.get(key: test_key, bins: "name")
       expect(value).to eq("Test")
     end
 
-    it "checks record existence" do
-      AerospikeService.put(opts: { key: test_key, bins: test_data })
 
-      expect(AerospikeService.exists?(opts: { key: test_key })).to be true
-      expect(AerospikeService.exists?(opts: { key: "nonexistent-#{test_key}" })).to be false
+    it "checks record existence" do
+      AerospikeService.put(key: test_key, bins: test_data)
+
+      expect(AerospikeService.exists?(key: test_key)).to be true
+      expect(AerospikeService.exists?(key: "nonexistent-#{test_key}")).to be false
     end
 
     it "deletes records" do
-      AerospikeService.put(opts: { key: test_key, bins: test_data })
-      expect(AerospikeService.exists?(opts: { key: test_key })).to be true
+      AerospikeService.put(key: test_key, bins: test_data)
+      expect(AerospikeService.exists?(key: test_key)).to be true
 
-      result = AerospikeService.delete(opts: { key: test_key })
+      result = AerospikeService.delete(key: test_key)
       expect(result).to be true
-      expect(AerospikeService.exists?(opts: { key: test_key })).to be false
+      expect(AerospikeService.exists?(key: test_key)).to be false
     end
 
     it "increments counter bins" do
-      AerospikeService.put(opts: { key: test_key, bins: {"counter" => 0} })
+      AerospikeService.put(key: test_key, bins: { "counter" => 0 })
 
-      AerospikeService.increment(opts: { key: test_key, bin: "counter", value: 3 })
-      value = AerospikeService.get(opts: { key: test_key, bin: "counter" })
+      AerospikeService.increment(key: test_key, bin: "counter", value: 3)
+      value = AerospikeService.get(key: test_key, bins: "counter")
       expect(value).to eq(3)
 
-      AerospikeService.increment(opts: { key: test_key, bin: "counter" })
-      value = AerospikeService.get(opts: { key: test_key, bin: "counter" })
+      AerospikeService.increment(key: test_key, bin: "counter")
+      value = AerospikeService.get(key: test_key, bins: "counter")
       expect(value).to eq(4)
     end
 
-    it "touches records to update TTL" do
-      AerospikeService.put(opts: { key: test_key, bins: test_data, ttl: 10 })
 
-      result = AerospikeService.touch(opts: { key: test_key, ttl: 100 })
+    it "touches records to update TTL" do
+      AerospikeService.put(key: test_key, bins: test_data, ttl: 10)
+
+      result = AerospikeService.touch(key: test_key, ttl: 100)
       expect(result).to be true
 
       # Hard to test actual TTL without complicated setup
@@ -63,9 +66,9 @@ RSpec.describe "Client Integration" do
 
   describe "record objects" do
     it "creates and manipulates records" do
-      AerospikeService.put(opts: { key: test_key, bins: test_data })
+      AerospikeService.put(key: test_key, bins: test_data)
 
-      record = AerospikeService.record(opts: { key: test_key })
+      record = AerospikeService.record(key: test_key)
       expect(record).to be_a(AerospikeService::Models::Record)
       expect(record["name"]).to eq("Test")
 
@@ -73,21 +76,21 @@ RSpec.describe "Client Integration" do
       record.save
 
       # Verify saved
-      updated = AerospikeService.get(opts: { key: test_key })
+      updated = AerospikeService.get(key: test_key)
       expect(updated).to include("status" => "active")
     end
 
     it "creates and manipulates records using set method" do
-      AerospikeService.set(opts: { key: test_key, value: test_data })
+      AerospikeService.set(key: test_key, value: test_data)
 
-      record = AerospikeService.record(opts: { key: test_key })
+      record = AerospikeService.record(key: test_key)
       expect(record).to be_a(AerospikeService::Models::Record)
       expect(record["name"]).to eq("Test")
 
       record["status"] = "active"
       record.save
 
-      updated = AerospikeService.get(opts: { key: test_key })
+      updated = AerospikeService.get(key: test_key)
       expect(updated).to include("status" => "active")
     end
   end
@@ -96,20 +99,20 @@ RSpec.describe "Client Integration" do
     let(:test_keys) { ["batch-1-#{test_key}", "batch-2-#{test_key}"] }
 
     it "gets multiple records at once" do
-      AerospikeService.put(opts: { key: test_keys[0], bins: {"index" => 0} })
-      AerospikeService.put(opts: { key: test_keys[1], bins: {"index" => 1} })
+      AerospikeService.put(key: test_keys[0], bins: {"index" => 0})
+      AerospikeService.put(key: test_keys[1], bins: {"index" => 1})
 
-      results = AerospikeService.batch_get(opts: { keys: test_keys })
+      results = AerospikeService.batch_get(keys: test_keys)
       expect(results).to be_a(Hash)
       expect(results[test_keys[0]]).to include("index" => 0)
       expect(results[test_keys[1]]).to include("index" => 1)
     end
 
     it "gets multiple records at once using set" do
-      AerospikeService.set(opts: { key: test_keys[0], value: { "index" => 0 } })
-      AerospikeService.set(opts: { key: test_keys[1], value: { "index" => 1 } })
+      AerospikeService.set(key: test_keys[0], value: { "index" => 0 })
+      AerospikeService.set(key: test_keys[1], value: { "index" => 1 })
 
-      results = AerospikeService.batch_get(opts: { keys: test_keys })
+      results = AerospikeService.batch_get(keys: test_keys)
       expect(results).to be_a(Hash)
       expect(results[test_keys[0]]).to include("index" => 0)
       expect(results[test_keys[1]]).to include("index" => 1)
@@ -118,44 +121,44 @@ RSpec.describe "Client Integration" do
 
   describe "basic set operations" do
     it "gets a specific bin" do
-      AerospikeService.set(opts: { key: test_key, value: test_data })
+      AerospikeService.set(key: test_key, value: test_data)
 
-      value = AerospikeService.get(opts: { key: test_key, bin: "name" })
+      value = AerospikeService.get(key: test_key, bins: "name")
       expect(value).to eq("Test")
     end
 
     it "checks record existence" do
-      AerospikeService.set(opts: { key: test_key, value: test_data })
+      AerospikeService.set(key: test_key, value: test_data)
 
-      expect(AerospikeService.exists?(opts: { key: test_key })).to be true
-      expect(AerospikeService.exists?(opts: { key: "nonexistent-#{test_key}" })).to be false
+      expect(AerospikeService.exists?(key: test_key)).to be true
+      expect(AerospikeService.exists?(key: "nonexistent-#{test_key}")).to be false
     end
 
     it "deletes records" do
-      AerospikeService.set(opts: { key: test_key, value: test_data })
-      expect(AerospikeService.exists?(opts: { key: test_key })).to be true
+      AerospikeService.set(key: test_key, value: test_data)
+      expect(AerospikeService.exists?(key: test_key)).to be true
 
-      result = AerospikeService.delete(opts: { key: test_key })
+      result = AerospikeService.delete(key: test_key)
       expect(result).to be true
-      expect(AerospikeService.exists?(opts: { key: test_key })).to be false
+      expect(AerospikeService.exists?(key: test_key)).to be false
     end
 
     it "increments counter bins" do
-      AerospikeService.set(opts: { key: test_key, value: { "counter" => 0 } })
+      AerospikeService.set(key: test_key, value: { "counter" => 0 })
 
-      AerospikeService.increment(opts: { key: test_key, bin: "counter", value: 3 })
-      value = AerospikeService.get(opts: { key: test_key, bin: "counter" })
+      AerospikeService.increment(key: test_key, bin: "counter", value: 3)
+      value = AerospikeService.get(key: test_key, bins: "counter")
       expect(value).to eq(3)
 
-      AerospikeService.increment(opts: { key: test_key, bin: "counter" })
-      value = AerospikeService.get(opts: { key: test_key, bin: "counter" })
+      AerospikeService.increment(key: test_key, bin: "counter")
+      value = AerospikeService.get(key: test_key, bins: "counter")
       expect(value).to eq(4)
     end
 
     it "touches records to update TTL" do
-      AerospikeService.set(opts: { key: test_key, value: test_data, expiration: 10 })
+      AerospikeService.set(key: test_key, value: test_data, expiration: 10)
 
-      result = AerospikeService.touch(opts: { key: test_key, ttl: 100 })
+      result = AerospikeService.touch(key: test_key, ttl: 100)
       expect(result).to be true
 
       # TTL verification is skipped as it requires metadata inspection
@@ -164,41 +167,41 @@ RSpec.describe "Client Integration" do
 
   describe "set operations" do
     it "sets a simple hash value with default settings" do
-      result = AerospikeService.set(opts: { key: test_key, value: test_data })
+      result = AerospikeService.set(key: test_key, value: test_data)
       expect(result).to be true
 
-      record = AerospikeService.get(opts: { key: test_key })
+      record = AerospikeService.get(key: test_key)
       expect(record).to include("name" => "Test", "count" => 5)
     end
 
     it "sets a single value (non-hash) under default bin" do
-      result = AerospikeService.set(opts: { key: test_key, value: "just_a_value" })
+      result = AerospikeService.set(key: test_key, value: "just_a_value")
       expect(result).to be true
 
-      record = AerospikeService.get(opts: { key: test_key })
+      record = AerospikeService.get(key: test_key)
       expect(record).to include("value" => "just_a_value") # assuming default bin name is "value"
     end
 
     it "sets values with symbol keys and converts them to strings" do
       symbol_data = { name: "Symbol", active: "false" }
-      result = AerospikeService.set(opts: { key: test_key, value: symbol_data })
+      result = AerospikeService.set(key: test_key, value: symbol_data)
       expect(result).to be true
 
-      record = AerospikeService.get(opts: { key: test_key })
+      record = AerospikeService.get(key: test_key)
       expect(record).to include("name" => "Symbol", "active" => "false")
     end
 
     it "converts boolean values to strings when specified" do
       data = { flag: true, other_flag: "false" }
-      result = AerospikeService.set(opts: { key: test_key, value: data, convert_boolean_values: true })
+      result = AerospikeService.set(key: test_key, value: data, convert_boolean_values: true)
       expect(result).to be true
 
-      record = AerospikeService.get(opts: { key: test_key })
+      record = AerospikeService.get(key: test_key)
       expect(record).to include("flag" => "true", "other_flag" => "false")
     end
 
     it "sets data with a custom expiration time (TTL)" do
-      result = AerospikeService.set(opts: { key: test_key, value: test_data, expiration: 600 })
+      result = AerospikeService.set(key: test_key, value: test_data, expiration: 600)
       expect(result).to be true
     end
 
@@ -208,7 +211,7 @@ RSpec.describe "Client Integration" do
       allow(AerospikeService).to receive(:set).and_raise(Aerospike::Exceptions::Aerospike.new("record too big"))
 
       expect {
-        AerospikeService.set(opts: { key: test_key, value: big_data })
+        AerospikeService.set(key: test_key, value: big_data)
       }.to raise_error(Aerospike::Exceptions::Aerospike)
     end
   end

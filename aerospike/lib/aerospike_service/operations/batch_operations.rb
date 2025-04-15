@@ -3,6 +3,9 @@
 module AerospikeService
   module Operations
     module BatchOperations
+
+      AS_DEFAULT_SETNAME = "test"
+      AS_DEFAULT_BIN_NAME = "value"
       def batch_get(opts = {})
         keys = opts.fetch(:keys)
         namespace = opts.fetch(:namespace, current_namespace)
@@ -87,10 +90,10 @@ module AerospikeService
 
       def mget_all(opts = {})
 
-        keys      = opts.fetch(:keys)
+        keys = opts.fetch(:keys)
         namespace = opts.fetch(:namespace, current_namespace)
-        bins      = opts.fetch(:bins, nil)
-        setname   = opts.fetch(:setname, AS_DEFAULT_SETNAME)
+        bins = opts.fetch(:bins, nil)
+        setname = opts.fetch(:setname, AS_DEFAULT_SETNAME)
 
         connection = connection_for_namespace(namespace)
 

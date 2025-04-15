@@ -5,6 +5,8 @@ module AerospikeService
     module ReadOperations
 
       AS_DEFAULT_SETNAME = "test"
+      AS_DEFAULT_BIN_NAME = "value"
+
       def get(opts = {})
         key = opts.fetch(:key, nil)
         bins = opts.fetch(:bins, [])
@@ -78,14 +80,14 @@ module AerospikeService
       end
 
       def by_rank_range_map_bin(opts = {})
-        key          = opts.fetch(:key)
-        namespace    = opts.fetch(:namespace, current_namespace)
-        setname      = opts.fetch(:setname, AS_DEFAULT_SETNAME)
-        bin          = opts.fetch(:bin, AS_DEFAULT_BIN_NAME)
-        begin_token  = opts.fetch(:begin_token)
-        count        = opts.fetch(:count)
-        expiration   = opts.fetch(:expiration, nil)
-        return_type  = opts.fetch(:return_type, Aerospike::CDT::MapReturnType::KEY_VALUE)
+        key = opts.fetch(:key)
+        namespace = opts.fetch(:namespace, current_namespace)
+        setname = opts.fetch(:setname, AS_DEFAULT_SETNAME)
+        bin = opts.fetch(:bin, AS_DEFAULT_BIN_NAME)
+        begin_token = opts.fetch(:begin_token)
+        count = opts.fetch(:count)
+        expiration = opts.fetch(:expiration, nil)
+        return_type = opts.fetch(:return_type, Aerospike::CDT::MapReturnType::KEY_VALUE)
 
         connection = connection_for_namespace(namespace)
         aerospike_key = Aerospike::Key.new(namespace, setname, key.to_s)
