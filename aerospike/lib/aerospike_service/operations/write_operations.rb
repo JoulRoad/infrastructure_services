@@ -3,9 +3,9 @@
 module AerospikeService
   module Operations
     module WriteOperations
-      AS_DEFAULT_BIN_NAME = "value"
-      RECORD_TOO_BIG = "record too big"
-      AS_DEFAULT_SETNAME = "test"
+      AS_DEFAULT_BIN_NAME = "default"
+      RECORD_TOO_BIG = "Record too big"
+      AS_DEFAULT_SETNAME = "default"
 
       def put(opts = {})
         key = opts.fetch(:key)

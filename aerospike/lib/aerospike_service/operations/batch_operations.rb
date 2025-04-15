@@ -3,8 +3,8 @@
 module AerospikeService
   module Operations
     module BatchOperations
-      AS_DEFAULT_SETNAME = "test"
-      AS_DEFAULT_BIN_NAME = "value"
+      AS_DEFAULT_SETNAME = "default"
+      AS_DEFAULT_BIN_NAME = "default"
 
       def batch_get(opts = {})
         keys = opts.fetch(:keys)

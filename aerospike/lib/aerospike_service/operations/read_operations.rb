@@ -3,8 +3,8 @@
 module AerospikeService
   module Operations
     module ReadOperations
-      AS_DEFAULT_SETNAME = "test"
-      AS_DEFAULT_BIN_NAME = "value"
+      AS_DEFAULT_SETNAME = "default"
+      AS_DEFAULT_BIN_NAME = "default"
 
       def get(opts = {})
         key = opts.fetch(:key, nil)
