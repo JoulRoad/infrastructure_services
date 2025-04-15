@@ -3,7 +3,6 @@
 module AerospikeService
   module Operations
     module WriteOperations
-
       AS_DEFAULT_BIN_NAME = "value"
       RECORD_TOO_BIG = "record too big"
       AS_DEFAULT_SETNAME = "test"
@@ -16,7 +15,6 @@ module AerospikeService
         connection = connection_for_namespace(namespace)
 
         key_str = key.to_s
-
         aerospike_key = Aerospike::Key.new(namespace, "test", key_str)
 
         write_policy = nil
@@ -56,7 +54,6 @@ module AerospikeService
         connection = connection_for_namespace(namespace)
 
         key_str = key.to_s
-
         aerospike_key = Aerospike::Key.new(namespace, "test", key_str)
 
         begin
@@ -77,13 +74,12 @@ module AerospikeService
       end
 
       def touch(opts = {})
-        key      = opts.fetch(:key)
-        ttl      = opts.fetch(:ttl, nil)
+        key = opts.fetch(:key)
+        ttl = opts.fetch(:ttl, nil)
         namespace = opts.fetch(:namespace, current_namespace)
         connection = connection_for_namespace(namespace)
 
         key_str = key.to_s
-
         aerospike_key = Aerospike::Key.new(namespace, "test", key_str)
 
         begin
@@ -110,14 +106,13 @@ module AerospikeService
       end
 
       def increment(opts = {})
-        key       = opts.fetch(:key)
-        bin      = opts.fetch(:bin)
-        value     = opts.fetch(:value, 1)
+        key = opts.fetch(:key)
+        bin = opts.fetch(:bin)
+        value = opts.fetch(:value, 1)
         namespace = opts.fetch(:namespace, current_namespace)
         connection = connection_for_namespace(namespace)
 
         key_str = key.to_s
-
         aerospike_key = Aerospike::Key.new(namespace, "test", key_str)
 
         begin
@@ -162,31 +157,19 @@ module AerospikeService
         key_str = key.to_s
         aerospike_key = Aerospike::Key.new(namespace, setname, key_str)
 
-        unless value.is_a?(Hash)
-          value = { AS_DEFAULT_BIN_NAME => value }
-        else
-          value = value.transform_keys(&:to_s)
-        end
-
-        if enable_convert_booleans
-          value = convert_boolean_values(bins: value, bool_to_string: true)
-        end
+        value = value.is_a?(Hash) ? value.transform_keys(&:to_s) : {AS_DEFAULT_BIN_NAME => value}
+        value = convert_boolean_values(bins: value, bool_to_string: true) if enable_convert_booleans
 
         connection.put(aerospike_key, value, expiration: expiration)
-
         true
-
       rescue Aerospike::Exceptions::Aerospike => e
         if e.message == RECORD_TOO_BIG
-          $bigSessionLogger.error "Big Data is being set -> {key: #{key}, setname: #{setname}, expiration: #{expiration}}\n value => #{value}\n#{caller[0..4].join("\n")}"
+          LOGGER.error "Big Data is being set -> {key: #{key}, setname: #{setname}, expiration: #{expiration}}\n value => #{value}\n#{caller[0..4].join("\n")}"
         end
         raise OperationError, "Error setting record: #{e.message}"
-
       rescue => e
         raise OperationError, "Error setting record: #{e.message}"
       end
-
-
     end
   end
 end

@@ -3,7 +3,6 @@
 module AerospikeService
   module Operations
     module ReadOperations
-
       AS_DEFAULT_SETNAME = "test"
       AS_DEFAULT_BIN_NAME = "value"
 
@@ -43,15 +42,12 @@ module AerospikeService
         end
       end
 
-
       def exists?(opts = {})
-
         key = opts.fetch(:key, nil)
         namespace = opts.fetch(:namespace, current_namespace)
         connection = connection_for_namespace(namespace)
 
         key_str = key.to_s
-
         aerospike_key = Aerospike::Key.new(namespace, "test", key_str)
 
         begin
@@ -99,15 +95,14 @@ module AerospikeService
           result = connection.operate(aerospike_key, [operation], expiration: expiration)
 
           values = result&.bins&.[](bin)
-
-          return return_type == Aerospike::CDT::MapReturnType::KEY_VALUE ? {} : [] if values.nil?
+          return ((return_type == Aerospike::CDT::MapReturnType::KEY_VALUE) ? {} : []) if values.nil?
           return values unless values.is_a?(Hash)
 
           values.map { |k, v| [k, -v] }
         rescue Aerospike::Exceptions::Aerospike => e
           if e.message.include?("Invalid namespace")
             warn "Warning: Invalid namespace '#{namespace}'. Please check your Aerospike configuration."
-            return return_type == Aerospike::CDT::MapReturnType::KEY_VALUE ? {} : []
+            return ((return_type == Aerospike::CDT::MapReturnType::KEY_VALUE) ? {} : [])
           end
 
           raise OperationError, "Error performing by_rank_range_map_bin: #{e.message}"
@@ -115,7 +110,6 @@ module AerospikeService
           raise OperationError, "Error performing by_rank_range_map_bin: #{e.message}"
         end
       end
-
 
       private
 
@@ -129,9 +123,9 @@ module AerospikeService
 
         case
         when bins.is_a?(Hash)
-          return Hash[bins.map do |bin, value|
+          return bins.map do |bin, value|
             [bin, convert_boolean_values(bins: value, bool_to_string: bool_to_string)]
-          end]
+          end.to_h
         when bins.is_a?(Array)
           return bins.map { |bin| convert_boolean_values(bins: bin, bool_to_string: bool_to_string) }
         when bins.is_a?(String)
@@ -150,7 +144,6 @@ module AerospikeService
 
         bins
       end
-
     end
   end
 end

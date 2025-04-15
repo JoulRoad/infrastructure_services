@@ -63,9 +63,9 @@ RSpec.describe "Namespace Integration" do
 
       keys = ["#{test_key}-1", "#{test_key}-2", "#{test_key}-3"]
       values = [
-        { "value" => "one" },
-        { "value" => "two" },
-        { "value" => "three" }
+        {"value" => "one"},
+        {"value" => "two"},
+        {"value" => "three"}
       ]
 
       keys.each_with_index do |key, idx|
@@ -88,7 +88,7 @@ RSpec.describe "Namespace Integration" do
 
     it "sets and gets values using #set and #get" do
       key = "#{test_key}-set-get"
-      value = { "score" => 42 }
+      value = {"score" => 42}
 
       client.set(key: key, value: value)
       result = client.get(key: key)
@@ -102,7 +102,7 @@ RSpec.describe "Namespace Integration" do
 
       client.set(
         key: key,
-        value: { map_bin => { "a" => 1, "b" => 2, "c" => 3 } }
+        value: {map_bin => {"a" => 1, "b" => 2, "c" => 3}}
       )
 
       result = client.by_rank_range_map_bin(
@@ -114,5 +114,4 @@ RSpec.describe "Namespace Integration" do
       expect(result).to include(["a", -1], ["b", -2])
     end
   end
-
 end

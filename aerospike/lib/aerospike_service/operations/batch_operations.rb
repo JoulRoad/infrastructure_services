@@ -3,9 +3,9 @@
 module AerospikeService
   module Operations
     module BatchOperations
-
       AS_DEFAULT_SETNAME = "test"
       AS_DEFAULT_BIN_NAME = "value"
+
       def batch_get(opts = {})
         keys = opts.fetch(:keys)
         namespace = opts.fetch(:namespace, current_namespace)
@@ -24,12 +24,12 @@ module AerospikeService
             record = options ? connection.get(aerospike_key, options) : connection.get(aerospike_key)
 
             results[k] = if record
-                           if bins.any?
-                             bins.length == 1 ? record.bins[bins.first.to_s] : record.bins.slice(*bins.map(&:to_s))
-                           else
-                             record.bins
-                           end
-                         end
+              if bins.any?
+                (bins.length == 1) ? record.bins[bins.first.to_s] : record.bins.slice(*bins.map(&:to_s))
+              else
+                record.bins
+              end
+            end
           rescue Aerospike::Exceptions::Aerospike => e
             Rails.logger.error("Aerospike error: #{e.message}")
             results[k] = nil
@@ -45,7 +45,6 @@ module AerospikeService
       end
 
       def mget(opts = {})
-
         keys = opts.fetch(:keys)
         bins = opts.fetch(:bins, nil)
         namespace = opts.fetch(:namespace, current_namespace)
@@ -89,7 +88,6 @@ module AerospikeService
       end
 
       def mget_all(opts = {})
-
         keys = opts.fetch(:keys)
         namespace = opts.fetch(:namespace, current_namespace)
         bins = opts.fetch(:bins, nil)
@@ -108,7 +106,7 @@ module AerospikeService
           return [] unless records
 
           meta = {}
-          results = records.each_with_index.map do |record, idx|
+          records.each_with_index.map do |record, idx|
             if record.nil?
               nil
             else
@@ -121,8 +119,6 @@ module AerospikeService
               single_bin ? bin_data[bins_array.first] : bin_data
             end
           end
-
-          results
         rescue Aerospike::Exceptions::Aerospike => e
           if e.message.include?("Invalid namespace")
             warn "Warning: Invalid namespace '#{namespace}'. Please check your Aerospike configuration."
@@ -134,8 +130,6 @@ module AerospikeService
           raise OperationError, "Error during batch get: #{e.message}"
         end
       end
-
-
     end
   end
 end

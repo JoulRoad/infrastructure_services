@@ -16,14 +16,12 @@ RSpec.describe "Client Integration" do
       expect(retrieved).to include("name" => "Test", "count" => 5)
     end
 
-
     it "gets a specific bin" do
       AerospikeService.put(key: test_key, bins: test_data)
 
       value = AerospikeService.get(key: test_key, bins: "name")
       expect(value).to eq("Test")
     end
-
 
     it "checks record existence" do
       AerospikeService.put(key: test_key, bins: test_data)
@@ -42,7 +40,7 @@ RSpec.describe "Client Integration" do
     end
 
     it "increments counter bins" do
-      AerospikeService.put(key: test_key, bins: { "counter" => 0 })
+      AerospikeService.put(key: test_key, bins: {"counter" => 0})
 
       AerospikeService.increment(key: test_key, bin: "counter", value: 3)
       value = AerospikeService.get(key: test_key, bins: "counter")
@@ -52,7 +50,6 @@ RSpec.describe "Client Integration" do
       value = AerospikeService.get(key: test_key, bins: "counter")
       expect(value).to eq(4)
     end
-
 
     it "touches records to update TTL" do
       AerospikeService.put(key: test_key, bins: test_data, ttl: 10)
@@ -109,8 +106,8 @@ RSpec.describe "Client Integration" do
     end
 
     it "gets multiple records at once using set" do
-      AerospikeService.set(key: test_keys[0], value: { "index" => 0 })
-      AerospikeService.set(key: test_keys[1], value: { "index" => 1 })
+      AerospikeService.set(key: test_keys[0], value: {"index" => 0})
+      AerospikeService.set(key: test_keys[1], value: {"index" => 1})
 
       results = AerospikeService.batch_get(keys: test_keys)
       expect(results).to be_a(Hash)
@@ -144,7 +141,7 @@ RSpec.describe "Client Integration" do
     end
 
     it "increments counter bins" do
-      AerospikeService.set(key: test_key, value: { "counter" => 0 })
+      AerospikeService.set(key: test_key, value: {"counter" => 0})
 
       AerospikeService.increment(key: test_key, bin: "counter", value: 3)
       value = AerospikeService.get(key: test_key, bins: "counter")
@@ -183,7 +180,7 @@ RSpec.describe "Client Integration" do
     end
 
     it "sets values with symbol keys and converts them to strings" do
-      symbol_data = { name: "Symbol", active: "false" }
+      symbol_data = {name: "Symbol", active: "false"}
       result = AerospikeService.set(key: test_key, value: symbol_data)
       expect(result).to be true
 
@@ -192,7 +189,7 @@ RSpec.describe "Client Integration" do
     end
 
     it "converts boolean values to strings when specified" do
-      data = { flag: true, other_flag: "false" }
+      data = {flag: true, other_flag: "false"}
       result = AerospikeService.set(key: test_key, value: data, convert_boolean_values: true)
       expect(result).to be true
 
@@ -206,7 +203,7 @@ RSpec.describe "Client Integration" do
     end
 
     it "raises an error when record is too big" do
-      big_data = { data: "x" * 2_000_000 } # simulate a large payload
+      big_data = {data: "x" * 2_000_000} # simulate a large payload
 
       allow(AerospikeService).to receive(:set).and_raise(Aerospike::Exceptions::Aerospike.new("record too big"))
 
@@ -217,21 +214,19 @@ RSpec.describe "Client Integration" do
   end
 end
 
-
 RSpec.describe "Client Integration" do
   let(:namespace) { AerospikeService.configuration.default_namespace }
   let(:key1) { "test-key1-#{Time.now.to_i}-#{rand(1000)}" }
   let(:key2) { "test-key2-#{Time.now.to_i}-#{rand(1000)}" }
   let(:missing_key) { "missing-key-#{Time.now.to_i}-#{rand(1000)}" }
 
-  let(:data1) { { "name" => "Alice", "active" => true } }
-  let(:data2) { { "name" => "Bob", "active" => false } }
+  let(:data1) { {"name" => "Alice", "active" => true} }
+  let(:data2) { {"name" => "Bob", "active" => false} }
 
   before do
-    AerospikeService.set(key: key1, value: { "name" => "Alice", "active" => "true" }, namespace: namespace)
-    AerospikeService.set(key: key2, value: { "name" => "Bob", "active" => "false" }, namespace: namespace)
+    AerospikeService.set(key: key1, value: {"name" => "Alice", "active" => "true"}, namespace: namespace)
+    AerospikeService.set(key: key2, value: {"name" => "Bob", "active" => "false"}, namespace: namespace)
   end
-
 
   describe ".mget" do
     it "returns full records for multiple keys" do
@@ -246,7 +241,6 @@ RSpec.describe "Client Integration" do
       result = AerospikeService.mget(keys: [key1, key2], bins: "name", namespace: namespace)
       expect(result).to eq(["Alice", "Bob"])
     end
-
 
     it "returns nil for a missing key" do
       result = AerospikeService.mget(keys: [key1, missing_key], bins: ["name", "active"], namespace: namespace)
@@ -288,7 +282,7 @@ RSpec.describe "Client Integration" do
     AerospikeService.put(
       key: key,
       namespace: namespace,
-      bins: { bin_name => map_data }
+      bins: {bin_name => map_data}
     )
   end
 
@@ -377,5 +371,3 @@ RSpec.describe "Client Integration" do
     end
   end
 end
-
-
