@@ -10,13 +10,14 @@ Gem::Specification.new do |spec|
     spec.require_paths = ["lib"]
     spec.homepage = "https://github.com/JoulRoad/infrastructure_services"
     spec.required_ruby_version = ">= 3.3.7"
-    
+
     # Optional runtime dependencies
     spec.add_runtime_dependency "aerospike", "~> 0.1"  # Your custom gem
     spec.add_runtime_dependency "redis", "~> 0.1"      # Your custom gem
     spec.add_runtime_dependency "solr", "~> 0.1"       # Your custom gem
     spec.add_runtime_dependency "rest_api", "~> 0.1"   # Your custom gem
-  
-    spec.add_development_dependency "rails", "~> 8.0.2"  # For ActiveSupport in dev
+    
+    spec.add_dependency "activesupport", ">= 6.1", "< 9.0"  # For ActiveSupport features
+
     spec.add_development_dependency "rspec", "~> 3.0"  # For testing
   end
