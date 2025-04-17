@@ -139,7 +139,3 @@ RSpec.describe "Client Integration" do
     end
   end
 end
-
-
-
-
