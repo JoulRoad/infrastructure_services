@@ -3,12 +3,13 @@
 module AerospikeService
   module Models
     class Record
-      attr_reader :key, :bins, :namespace
+      attr_reader :key, :bins, :namespace, :setname
 
-      def initialize(key:, bins:, namespace:)
+      def initialize(key:, bins:, namespace:, setname: nil)
         @key = key
         @bins = bins || {}
         @namespace = namespace
+        @setname = setname
       end
 
       def [](bin)
@@ -20,7 +21,7 @@ module AerospikeService
       end
 
       def save(ttl: nil)
-        AerospikeService.put(key: key, bins: bins, namespace: namespace, ttl: ttl)
+        AerospikeService.set(key: key, value: bins, namespace: namespace, ttl: ttl, setname: setname)
       end
 
       def delete

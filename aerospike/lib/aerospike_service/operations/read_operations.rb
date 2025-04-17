@@ -68,11 +68,12 @@ module AerospikeService
 
       def record(opts = {})
         key = opts.fetch(:key, nil)
+        setname = opts[:setname]
         namespace = opts.fetch(:namespace, current_namespace)
-        bins = get(key: key, namespace: namespace)
+        bins = get(key: key, namespace: namespace, setname: setname)
         return nil unless bins
 
-        Models::Record.new(key: key, bins: bins, namespace: namespace)
+        Models::Record.new(key: key, bins: bins, namespace: namespace, setname: setname)
       end
 
       def by_rank_range_map_bin(opts = {})
