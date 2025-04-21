@@ -1,70 +1,58 @@
 module Services
-    module Product
-      module Aerospike
-        # Global dependency check:
-        begin
-          require "aerospike" # Your custom gem
-        rescue LoadError
-          raise "The 'aerospike' gem is required for Aerospike functionality. Add 'gem \"aerospike\"' to your Gemfile."
-        end
-  
-        # Now, since Aerospike is guaranteed to be available, you can define your methods without repetitive checks.
-        def self.client
+  module Product
+    module Aerospike
+      begin
+        require 'aerospike'
+      rescue LoadError
+        raise "The 'aerospike' gem is required for Aerospike functionality. " \
+              "Add 'gem \"aerospike\"' to your Gemfile."
+      end
+
+      ProductSetnameFieldCount = 6.freeze
+
+      class << self
+        def client
           @client ||= AerospikeGem::Client.new
         end
-  
-        def self.brand_rating_for_vendor(vendor_id)
-          return nil unless vendor_id.present?
-  
-          response = client.get(vendor_id, "vendor_scores", "default")
-          return nil if response.blank?
-  
-          json = JSON.parse(response)
-          score = json.dig("scores", "AggregatedScore").to_f
-          return nil if score.negative?
-  
-          score.round(1)
-        rescue StandardError => e
-          Rails.logger.error(e.inspect) if defined?(Rails)
-          nil
-        end
-  
-        def self.fetch_product_details_from_source(ids, price_interval)
-          ret_hash = client.mget(
-            ids,
-            "upid_data",
-            ["static", "price_#{price_interval}", "qualityRating", "static_video", "o2o_video", "feedbackUpid"]
-          )
-  
-          tmp_arr = if ret_hash.blank?
-                      []
-                    else
-                      ret_hash.inject([]) do |arr, map|
-                        arr << (map.present? ? [
-                          map["static"],
-                          map["price_#{price_interval}"],
-                          map["qualityRating"],
-                          map["static_video"],
-                          map["o2o_video"],
-                          map["feedbackUpid"]
-                        ] : [nil, nil, nil, nil, nil, nil])
-                      end.flatten
-                    end
-  
-          ids.each_with_index.each_with_object({}) do |(id, index), ret_map|
-            base = Utils::ProductSetnameFieldCount * index
-            quality = { "quality" => tmp_arr[base + 2] }
-            ret_map[id] = [
-              tmp_arr[base],
-              tmp_arr[base + 1],
-              quality.to_json,
-              tmp_arr[base + 3],
-              tmp_arr[base + 4],
-              tmp_arr[base + 5]
-            ]
+
+        def fetch_products_by_ids(ids, bins, fields_to_be_fetched)
+          return {} if ids.blank?
+
+          records = client.mget(ids, 'upid_data', bins)
+
+          values = if records.blank?
+                     []
+                   else
+                     records.each_with_object([]) do |record, arr|
+                       if record.present?
+                         fields_to_be_fetched.each { |field| arr << record[field] }
+                       else
+                         fields_to_be_fetched.size.times { arr << nil }
+                       end
+                     end
+                   end
+
+          ids.each_with_index.inject({}) do |result, (id, index)|
+            base_index = ProductSetnameFieldCount * index
+
+            field_values = fields_to_be_fetched.each_with_index.map do |field, field_index|
+              value = values[base_index + field_index]
+
+              if field == 'qualityRating'
+                { 'quality' => value }.to_json
+              else
+                value
+              end
+            end
+
+            result.merge({ id => field_values })
           end
+        end
+
+        def fetch_product_by_id(id, bins,fields_to_be_fetched)
+          fetch_products_by_ids([id], bins, fields_to_be_fetched)[id]
         end
       end
     end
+  end
 end
-  

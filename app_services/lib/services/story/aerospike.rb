@@ -2,48 +2,35 @@ module Services
     module Story
         module Aerospike
           class << self 
-             # Global dependency check:
             begin
-                require "aerospike" # Your custom gem
+                require "aerospike"
             rescue LoadError
                 raise "The 'aerospike' gem is required for Aerospike functionality. Add 'gem \"aerospike\"' to your Gemfile."
             end
     
-          # Now, since Aerospike is guaranteed to be available, you can define your methods without repetitive checks.
-            def self.client
+            def client
                 @client ||= AerospikeGem::Client.new
             end
             
-            def get_stories_by_story_ids(story_ids, email: nil, basic_info: false, attr: [])
-              result = []
-              return result if story_ids.blank?
-      
-              cached_stories_map = ::Story::Cache.get_stories_from_cache_by_ids(story_ids)
-              stories = cached_stories_map.values
-              stories_not_in_cache = story_ids.reject { |story| story == "-1" } - cached_stories_map.keys
-      
-              if stories_not_in_cache.blank?
-                result = stories + (story_ids.last == "-1" ? ["-1"] : [])
-              else
-                more_stories = Story::HttpClient.get_trimmed_stories_from_mongo_by_story_ids(stories_not_in_cache, email)
-                if more_stories.blank?
-                  result = stories + (story_ids.last == "-1" ? ["-1"] : [])
-                else
-                  result = stories + more_stories + (story_ids.last == "-1" ? ["-1"] : [])
-                end
+            def fetch_stories_by_ids(ids, bins, fields_to_be_fetched)
+              return {} if ids.blank?
+            
+              stories = client.mget(ids, "stories", bins)
+              
+              processed_stories = stories.map do |story|
+                next nil if story.blank?
+                fields_to_be_fetched.map { |field| story[field] }
               end
-      
-              result.select { |story| story != "-1" }.map { |story| story.slice(*attr) }
+              
+              Hash[ids.zip(processed_stories)].reject { |_, v| v.blank? }
             end
-      
-            def get_full_stories_by_stories_ids(story_ids, email: nil, basic_info: false, attr: [])
-              story_data = get_stories_by_story_ids(story_ids, email: email, basic_info: basic_info, attr: attr)
-              story_data.each_with_object({}) do |story, stories_map|
-                if story.present? && story['story_id'].present?
-                  stories_map[story['story_id']] = story
-                end
-              end
+            
+            def fetch_story_by_id(id, bins, fields_to_be_fetched)
+              story = client.get(id, "stories", bins)
+              return nil if story.blank?
+              fields_to_be_fetched.map { |field| story[field] }
             end
+
           end
         end
     end      
