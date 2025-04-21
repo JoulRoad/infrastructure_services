@@ -1,0 +1,8 @@
+fix: false  # Set to true if you want auto-fix by default
+parallel: true
+ignore:
+  - 'vendor/**/*'
+  - 'bin/**/*'
+  - 'spec/fixtures/**/*'
+  - 'tmp/**/*'
+  - 'lib/redis_service/templates/**/*'

@@ -1,0 +1,54 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "bundler/setup"
+require "redis_service"
+
+# Configure for console use
+RedisService.configure do |config|
+  config.host = ENV.fetch("REDIS_HOST", "localhost")
+  config.port = ENV.fetch("REDIS_PORT", 6379).to_i
+  config.db = ENV.fetch("REDIS_DB", 0).to_i
+end
+
+puts "RedisService console started (using redis-client)"
+puts "Configuration:"
+puts "  Host: #{RedisService.configuration.host}:#{RedisService.configuration.port}"
+puts "  Database: #{RedisService.configuration.db}"
+puts
+puts "Example usage:"
+puts "  RedisService.set('test:key', { value: 'hello world' })"
+puts "  RedisService.get('test:key')"
+puts
+puts "Higher-level models:"
+puts "  kv = RedisService.key_value_store"
+puts "  hash = RedisService.hash_store"
+puts "  list = RedisService.list"
+puts
+
+# Load Pry if available, otherwise fall back to IRB
+begin
+  require "pry"
+  Pry.start
+rescue LoadError
+  require "irb"
+  IRB.start(__FILE__)
+end
+
+# You can add fixtures and/or initialization code here to make experimenting
+# with your gem easier. You can also use a different console, if you like.
+
+# Create some common objects for convenience
+KV = RedisService.key_value_store
+HASH = RedisService.hash_store
+LIST = RedisService.list
+SET = RedisService.set
+ZSET = RedisService.sorted_set
+
+if ENV["REDIS_TEST_MODE"]
+  require "mock_redis"
+  # Override the Redis connection with a mock for testing
+  redis_mock = MockRedis.new
+  allow_any_instance_of(Redis).to receive(:new).and_return(redis_mock)
+  puts "Running in test mode with MockRedis"
+end 

@@ -1,0 +1,109 @@
+# frozen_string_literal: true
+
+# Redis Shortcuts
+# This file provides shortcut access to RedisService namespaces and models
+# You can customize this file to suit your application's needs
+# Place this file in config/initializers/ or include it from your main initializer
+
+module Redis
+  class << self
+    # Generic access to RedisService for main operations
+    def set(key, value, options = {})
+      RedisService.set(key, value, options)
+    end
+
+    def get(key)
+      RedisService.get(key)
+    end
+
+    def delete(key)
+      RedisService.delete(key)
+    end
+    
+    # Add more convenience methods as needed
+  end
+  
+  # Access Redis namespaces directly using constants
+  # This allows you to use Redis::Cache.set(...) instead of RedisService.namespace("cache").set(...)
+  Cache = RedisService.namespace("cache")
+  Sessions = RedisService.namespace("sessions")
+  Sidekiq = RedisService.namespace("sidekiq")
+  
+  # Direct access to specialized stores for each namespace
+  module Store
+    # Key-Value Stores (simple key-value operations)
+    Cache = RedisService.key_value_store("cache")
+    Sessions = RedisService.key_value_store("sessions")
+    Users = RedisService.key_value_store("users")
+    
+    # Usage:
+    # Redis::Store::Cache["homepage"] = rendered_html
+    # content = Redis::Store::Cache["homepage"] 
+  end
+  
+  module Hash
+    # Hash Stores (access Redis hashes with a higher-level API)
+    Cache = RedisService.hash_store("cache")
+    Users = RedisService.hash_store("users")
+    Settings = RedisService.hash_store("settings")
+    
+    # Usage:
+    # Redis::Hash::Users.set("profiles", user_id, { role: "admin" })
+    # profile = Redis::Hash::Users.get("profiles", user_id)
+    # all_profiles = Redis::Hash::Users.all("profiles")
+  end
+  
+  module List
+    # List Stores (access Redis lists with a higher-level API)
+    Recent = RedisService.list("recent")
+    Events = RedisService.list("events")
+    
+    # Usage:
+    # Redis::List::Recent.push("users", user_id)
+    # Redis::List::Recent.all("users")
+    # Redis::List::Recent.pop("users")
+  end
+  
+  module Set
+    # Set Stores (access Redis sets with a higher-level API)
+    Tags = RedisService.set("tags")
+    Active = RedisService.set("active")
+    
+    # Usage:
+    # Redis::Set::Tags.add("products", "electronics")
+    # Redis::Set::Tags.members("products")
+    # Redis::Set::Tags.include?("products", "electronics")
+  end
+  
+  module SortedSet
+    # Sorted Set Stores (access Redis sorted sets with a higher-level API)
+    Leaderboard = RedisService.sorted_set("leaderboard")
+    Rankings = RedisService.sorted_set("rankings")
+    
+    # Usage:
+    # Redis::SortedSet::Leaderboard.add("scores", 100, player_id)
+    # Redis::SortedSet::Leaderboard.range("scores", 0, 9)
+  end
+end
+
+# Optional: Add global helper methods for controllers and models
+# Uncomment if you want these global shortcuts
+# 
+# module RedisHelpers
+#   def cache
+#     Redis::Cache
+#   end
+#   
+#   def redis
+#     RedisService
+#   end
+# end
+# 
+# # Include helpers in Rails controllers and models
+# ActiveSupport.on_load(:action_controller) do
+#   include RedisHelpers
+# end
+# 
+# ActiveSupport.on_load(:active_record) do
+#   include RedisHelpers
+# end 
