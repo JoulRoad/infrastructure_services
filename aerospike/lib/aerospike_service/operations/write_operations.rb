@@ -3,21 +3,20 @@
 module AerospikeService
   module Operations
     module WriteOperations
-      AS_DEFAULT_BIN_NAME = "default"
+      DEFAULT_SETNAME = "default"
+      DEFAULT_BIN_NAME = "default"
       RECORD_TOO_BIG = "Record too big"
-      AS_DEFAULT_SETNAME = "default"
 
       def delete(opts = {})
-        key = opts.fetch(:key)
+        key = opts.fetch(:key, nil)
+        setname = opts.fetch(:setname, nil)
+
         namespace = opts.fetch(:namespace, current_namespace)
         connection = connection_for_namespace(namespace)
 
-        key_str = key.to_s
-        aerospike_key = Aerospike::Key.new(namespace, "test", key_str)
-
         begin
+          aerospike_key = Aerospike::Key.new(namespace, setname, key.to_s)
           connection.delete(aerospike_key)
-          true
         rescue Aerospike::Exceptions::Aerospike => e
           return false if e.message.include?("not found")
 
@@ -33,22 +32,22 @@ module AerospikeService
       end
 
       def touch(opts = {})
-        key = opts.fetch(:key)
-        ttl = opts.fetch(:ttl, nil)
+        key = opts.fetch(:key, nil)
+        setname = opts.fetch(:setname, nil)
+        expiration = opts.fetch(:expiration, nil)
+
         namespace = opts.fetch(:namespace, current_namespace)
         connection = connection_for_namespace(namespace)
 
-        key_str = key.to_s
-        aerospike_key = Aerospike::Key.new(namespace, "test", key_str)
-
         begin
+          aerospike_key = Aerospike::Key.new(namespace, setname, key.to_s)
           record = connection.get(aerospike_key)
           return false unless record
 
           write_policy = Aerospike::WritePolicy.new
-          write_policy.ttl = ttl || 0 if write_policy.respond_to?(:ttl=)
+          write_policy.expiration = expiration
 
-          connection.put(aerospike_key, record.bins, write_policy)
+          connection.operate(aerospike_key, [Aerospike::Operation::TOUCH], write_policy)
           true
         rescue Aerospike::Exceptions::Aerospike => e
           return false if e.message.include?("not found")
@@ -65,32 +64,19 @@ module AerospikeService
       end
 
       def increment(opts = {})
-        key = opts.fetch(:key)
-        bin = opts.fetch(:bin)
-        incr_by = opts[:incr_by] || opts.fetch(:value, 1)
+        key = opts.fetch(:key, nil)
+        bin = opts.fetch(:bin, nil)
+        incr_by = opts.fetch(:incr_by, 1)
+        setname = opts.fetch(:setname, nil)
+        expiration = opts.fetch(:expiration, nil)
+
         namespace = opts.fetch(:namespace, current_namespace)
         connection = connection_for_namespace(namespace)
 
-        key_str = key.to_s
-        aerospike_key = Aerospike::Key.new(namespace, "test", key_str)
-
         begin
-          current_val = 0
-          begin
-            record = connection.get(aerospike_key)
-            if record && record.bins[bin.to_s]
-              current_val = record.bins[bin.to_s].to_i
-            end
-          rescue Aerospike::Exceptions::Aerospike => e
-            if e.message.include?("Invalid namespace")
-              warn "Warning: Invalid namespace '#{namespace}'. Please check your Aerospike configuration."
-              return false
-            end
-          rescue => e
-            Rails.logger.error "Error getting record for increment: #{e.message}"
-          end
-
-          connection.put(aerospike_key, {bin.to_s => current_val + incr_by})
+          aerospike_key = Aerospike::Key.new(namespace, setname, key.to_s)
+          operation = Aerospike::Operation.add(Bin.new(bin, incr_by))
+          connection.operate(aerospike_key, [operation], expiration: expiration)
           true
         rescue Aerospike::Exceptions::Aerospike => e
           if e.message.include?("Invalid namespace")
@@ -105,30 +91,31 @@ module AerospikeService
       end
 
       def set(opts = {})
-        key = opts.fetch(:key)
-        value = opts.fetch(:value)
-        namespace = opts.fetch(:namespace, current_namespace)
-        setname = opts.fetch(:setname, AS_DEFAULT_SETNAME)
+        key = opts.fetch(:key, nil)
+        value = opts.fetch(:value, nil)
         expiration = opts.fetch(:expiration, -1)
-        enable_convert_booleans = opts.fetch(:convert_boolean_values, false)
-        value = value.is_a?(Hash) ? value : {"value" => value}
+        setname = opts.fetch(:setname, DEFAULT_SETNAME)
 
+        namespace = opts.fetch(:namespace, current_namespace)
         connection = connection_for_namespace(namespace)
-        key_str = key.to_s
-        aerospike_key = Aerospike::Key.new(namespace, setname, key_str)
 
-        value = value.is_a?(Hash) ? value.transform_keys(&:to_s) : {AS_DEFAULT_BIN_NAME => value}
-        value = convert_boolean_values(bins: value, bool_to_string: true) if enable_convert_booleans
+        begin
+          aerospike_key = Aerospike::Key.new(namespace, setname, key.to_s)
 
-        connection.put(aerospike_key, value, expiration: expiration)
-        true
-      rescue Aerospike::Exceptions::Aerospike => e
-        if e.message == RECORD_TOO_BIG
-          LOGGER.error "Big Data is being set -> {key: #{key}, setname: #{setname}, expiration: #{expiration}}\n value => #{value}\n#{caller[0..4].join("\n")}"
+          value = value.is_a?(Hash) ? value.transform_keys(&:to_s) : {DEFAULT_BIN_NAME => value}
+          enable_convert_booleans = opts.fetch(:convert_boolean_values, false)
+          value = convert_boolean_values(bins: value, bool_to_string: true) if enable_convert_booleans
+
+          connection.put(aerospike_key, value, expiration: expiration)
+          true
+        rescue Aerospike::Exceptions::Aerospike => e
+          if e.message == RECORD_TOO_BIG
+            puts "Big Data is being set -> {key: #{key}, setname: #{setname}, expiration: #{expiration}}\n value => #{value}\n#{caller[0..4].join("\n")}"
+          end
+          raise OperationError, "Error setting record: #{e.message}"
+        rescue => e
+          raise OperationError, "Error setting record: #{e.message}"
         end
-        raise OperationError, "Error setting record: #{e.message}"
-      rescue => e
-        raise OperationError, "Error setting record: #{e.message}"
       end
 
       private
@@ -137,28 +124,27 @@ module AerospikeService
         bins = opts.fetch(:bins)
         bool_to_string = opts.fetch(:bool_to_string, false)
 
-        case
-        when bins.is_a?(Hash)
-          return bins.map do |bin, value|
+        if bins.is_a?(Hash)
+          bins.map do |bin, value|
             [bin, convert_boolean_values(bins: value, bool_to_string: bool_to_string)]
           end.to_h
-        when bins.is_a?(Array)
-          return bins.map { |bin| convert_boolean_values(bins: bin, bool_to_string: bool_to_string) }
-        when bins.is_a?(String)
+        elsif bins.is_a?(Array)
+          bins.map { |bin| convert_boolean_values(bins: bin, bool_to_string: bool_to_string) }
+        elsif bins.is_a?(String)
           if bins == "true"
-            return bool_to_string ? bins : true
+            bool_to_string ? bins : true
           elsif bins == "false"
-            return bool_to_string ? bins : false
+            bool_to_string ? bins : false
           else
-            return bins
+            bins
           end
-        when bins == true
-          return bool_to_string ? "true" : bins
-        when bins == false
-          return bool_to_string ? "false" : bins
+        elsif bins == true
+          bool_to_string ? "true" : bins
+        elsif bins == false
+          bool_to_string ? "false" : bins
+        else
+          bins
         end
-
-        bins
       end
     end
   end
