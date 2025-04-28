@@ -11,7 +11,7 @@ echo "🔍 Detected Ruby version: $RUBY_VERSION"
 echo "🧹 Cleaning up previous bundle installation..."
 rm -rf .bundle
 rm -rf vendor/bundle
-[ -f Gemfile.lock ] && rm Gemfile.lock
+# [ -f Gemfile.lock ] && rm Gemfile.lock
 bundle clean --force 2>/dev/null || true
 
 # Setup bundler paths
