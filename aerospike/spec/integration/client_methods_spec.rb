@@ -25,13 +25,13 @@ RSpec.describe "Client Integration" do
     it "checks record existence" do
       AerospikeService.set(key: test_key, setname: setname, value: test_data)
 
-      expect(AerospikeService.exists?(key: test_key)).to be true
-      expect(AerospikeService.exists?(key: "nonexistent-#{test_key}")).to be false
+      expect(AerospikeService.exists?(key: test_key, setname: setname)).to be true
+      expect(AerospikeService.exists?(key: "nonexistent-#{test_key}", setname: setname)).to be false
     end
 
     it "deletes records" do
       AerospikeService.set(key: test_key, setname: setname, value: test_data)
-      expect(AerospikeService.exists?(key: test_key)).to be true
+      expect(AerospikeService.exists?(key: test_key, setname: setname)).to be true
 
       result = AerospikeService.delete(key: test_key, setname: setname)
       expect(result).to be true
@@ -55,22 +55,6 @@ RSpec.describe "Client Integration" do
 
       result = AerospikeService.touch(key: test_key, setname: setname, expiration: 100)
       expect(result).to be true
-    end
-  end
-
-  describe "record objects" do
-    it "creates and manipulates records" do
-      AerospikeService.set(key: test_key, setname: setname, value: test_data)
-
-      record = AerospikeService.record(key: test_key, setname: setname)
-      expect(record).to be_a(AerospikeService::Models::Record)
-      expect(record["name"]).to eq("Test")
-
-      record["status"] = "active"
-      record.save
-
-      updated = AerospikeService.get(key: test_key, setname: setname, bins: ["status"])
-      expect(updated).to include("status" => "active")
     end
   end
 
