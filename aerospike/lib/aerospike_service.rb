@@ -11,7 +11,6 @@ require "aerospike_service/operations/batch_operations"
 require "aerospike_service/client/connection_manager"
 require "aerospike_service/client/base_client"
 require "aerospike_service/client/namespace_client"
-require "aerospike_service/models/record"
 
 module AerospikeService
   class << self
