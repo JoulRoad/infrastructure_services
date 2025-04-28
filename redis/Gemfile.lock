@@ -1,9 +1,11 @@
 PATH
   remote: .
   specs:
-    aerospike_service (0.1.0)
+    redis_service (0.1.0)
       activesupport (>= 6.1, < 9.0)
-      aerospike (~> 2.7.0)
+      connection_pool (~> 2.4)
+      hiredis (~> 0.6)
+      redis (~> 5.0)
 
 GEM
   remote: https://rubygems.org/
@@ -21,29 +23,25 @@ GEM
       securerandom (>= 0.3)
       tzinfo (~> 2.0, >= 2.0.5)
       uri (>= 0.13.1)
-    aerospike (2.7.0)
-      bcrypt (~> 3.1)
-      msgpack (~> 1.0)
     ast (2.4.3)
     base64 (0.2.0)
-    bcrypt (3.1.20)
     benchmark (0.4.0)
     bigdecimal (3.1.9)
     coderay (1.1.3)
     concurrent-ruby (1.3.5)
-    connection_pool (2.5.2)
+    connection_pool (2.5.0)
     diff-lcs (1.6.1)
     docile (1.4.1)
     drb (2.2.1)
+    hiredis (0.6.3)
     i18n (1.14.7)
       concurrent-ruby (~> 1.0)
-    json (2.11.3)
+    json (2.10.2)
     language_server-protocol (3.17.0.4)
     lint_roller (1.1.0)
     logger (1.7.0)
     method_source (1.1.0)
     minitest (5.25.5)
-    msgpack (1.8.0)
     parallel (1.27.0)
     parser (3.3.8.0)
       ast (~> 2.4.1)
@@ -55,6 +53,10 @@ GEM
     racc (1.8.1)
     rainbow (3.1.1)
     rake (13.2.1)
+    redis (5.4.0)
+      redis-client (>= 0.22.0)
+    redis-client (0.24.0)
+      connection_pool
     regexp_parser (2.10.0)
     rexml (3.4.1)
     rspec (3.13.0)
@@ -117,14 +119,14 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  aerospike_service!
   bundler (~> 2.4)
   pry (~> 0.14)
   rake (~> 13.0)
+  redis_service!
   rspec (~> 3.12)
   simplecov (~> 0.22)
   standard (~> 1.35.1)
   yard (~> 0.9)
 
 BUNDLED WITH
-   2.6.8
+   2.6.6

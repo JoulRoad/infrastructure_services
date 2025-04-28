@@ -1,0 +1,132 @@
+# frozen_string_literal: true
+
+# Redis Service initialization
+# This file is automatically loaded by Rails when the application starts
+
+# Configure RedisService with your Redis settings
+RedisService.configure do |config|
+  # Basic configuration - use separate URLs for read and write operations
+  # In a single-server setup, these will be the same
+  # In a production environment with Redis replicas, use the primary for writes and replicas for reads
+  config.read_url = ENV.fetch("REDIS_READ_URL", "redis://localhost:6379/0")
+  config.write_url = ENV.fetch("REDIS_WRITE_URL", "redis://localhost:6379/0")
+  
+  # Connection pool settings - adjust based on your application's concurrency needs
+  # For Puma, a good starting point is: (workers × threads) + headroom
+  config.pool_size = ENV.fetch("REDIS_POOL_SIZE", 5).to_i
+  config.pool_timeout = ENV.fetch("REDIS_POOL_TIMEOUT", 5.0).to_f
+  
+  # Timeouts - critical for production reliability
+  config.timeout = ENV.fetch("REDIS_TIMEOUT", 5.0).to_f
+  config.connect_timeout = ENV.fetch("REDIS_CONNECT_TIMEOUT", 2.0).to_f
+  config.read_timeout = ENV.fetch("REDIS_READ_TIMEOUT", 1.0).to_f
+  config.write_timeout = ENV.fetch("REDIS_WRITE_TIMEOUT", 1.0).to_f
+  
+  # Reconnection settings
+  config.reconnect_attempts = ENV.fetch("REDIS_RECONNECT_ATTEMPTS", 3).to_i
+  config.reconnect_delay = ENV.fetch("REDIS_RECONNECT_DELAY", 0.5).to_f
+  
+  # SSL configuration (for secure Redis connections)
+  # config.ssl = true
+  # config.ssl_params = { verify_mode: OpenSSL::SSL::VERIFY_NONE }
+  
+  # Namespace configuration - isolate keys for different purposes
+  # Each namespace can have its own configuration
+  config.namespaces = {
+    # Cache namespace - for storing cached data
+    "cache" => { 
+      prefix: "#{Rails.application.class.module_parent_name.downcase}_cache",
+      db: ENV.fetch("REDIS_CACHE_DB", 1).to_i,
+      # Uncomment to use different servers for cache
+      # read_url: ENV["REDIS_CACHE_READ_URL"],
+      # write_url: ENV["REDIS_CACHE_WRITE_URL"],
+    },
+    
+    # Sessions namespace - for storing session data
+    "sessions" => { 
+      prefix: "#{Rails.application.class.module_parent_name.downcase}_sessions",
+      db: ENV.fetch("REDIS_SESSIONS_DB", 2).to_i 
+    },
+    
+    # Sidekiq namespace - for background job queue
+    "sidekiq" => {
+      prefix: "#{Rails.application.class.module_parent_name.downcase}_sidekiq",
+      db: ENV.fetch("REDIS_SIDEKIQ_DB", 3).to_i
+    },
+    
+    # Add additional namespaces as needed for your application
+  }
+end
+
+# USAGE EXAMPLES:
+#
+# Basic key-value operations:
+#   RedisService.set("user:123", { name: "John", email: "john@example.com" })
+#   user = RedisService.get("user:123")
+#   RedisService.delete("user:123")
+#   exists = RedisService.exists?("user:123")
+#
+# Access different namespaces:
+#   cache = RedisService.namespace("cache")
+#   cache.set("homepage", rendered_html, expire_in: 3600)
+#
+#   sessions = RedisService.namespace("sessions")
+#   sessions.set("user_session:abc123", session_data)
+#
+# Data structure operations:
+#   # Lists
+#   RedisService.lpush("recent_users", user_id)
+#   recent = RedisService.lrange("recent_users", 0, 9)
+#   
+#   # Hashes
+#   RedisService.hset("user:profile:123", "status", "active")
+#   status = RedisService.hget("user:profile:123", "status")
+#   
+#   # Sets
+#   RedisService.sadd("active_users", user_id)
+#   is_active = RedisService.sismember("active_users", user_id)
+#   
+#   # Sorted Sets
+#   RedisService.zadd("leaderboard", 100, player_id)
+#   top_players = RedisService.zrange("leaderboard", 0, 9, with_scores: true)
+#
+# Higher-level models:
+#   kv_store = RedisService.key_value_store("cache")
+#   kv_store["stats"] = { visits: 1000 }
+#   
+#   hash_store = RedisService.hash_store("users")
+#   hash_store.set("profiles", user_id, { role: "admin" })
+#
+# See shortcuts.rb for examples of creating convenient shortcuts for your application
+
+# Access different namespaces:
+#   users_store = RedisService.namespace(:users)
+#   users_store.set("user_123", { name: "John" })
+#
+#   cache = RedisService.namespace(:cache)
+#   cache.set("stats", { visits: 1000 }, expire_in: 3600)
+
+# Access higher-level models:
+#   RedisService.key_value_store(:users)
+#   RedisService.hash_store(:users)
+#   RedisService.list(:users)
+#   RedisService.set(:users)
+#   RedisService.sorted_set(:users)
+
+# Set up shortcuts if needed
+module Redis
+  # Access Redis namespaces directly using constants
+  Cache = RedisService.namespace(:cache)
+  Sessions = RedisService.namespace(:sessions)
+  
+  # For direct access to model abstractions
+  module KV
+    Cache = RedisService.key_value_store(:cache)
+    Sessions = RedisService.key_value_store(:sessions)
+  end
+  
+  module Hash
+    Cache = RedisService.hash_store(:cache)
+    Sessions = RedisService.hash_store(:sessions)
+  end
+end 

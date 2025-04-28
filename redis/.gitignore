@@ -32,8 +32,6 @@
 *.swp
 
 # Ruby/Rails IDE specific
-**/.idea/
-.idea/
-/.idea/
+.idea/       # RubyMine
 .vscode/     # VS Code with Ruby extensions
 .solargraph/ # Solargraph Ruby language server

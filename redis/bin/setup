@@ -1,7 +1,7 @@
 #!/bin/bash
-# Aerospike Service Setup Script
+# Redis Service Setup Script
 
-echo "🚀 Setting up Aerospike Service gem repository"
+echo "🚀 Setting up Redis Service gem repository"
 
 # Get Ruby version from .ruby-version file
 RUBY_VERSION=$(cat .ruby-version | tr -d '\n')
@@ -11,7 +11,7 @@ echo "🔍 Detected Ruby version: $RUBY_VERSION"
 echo "🧹 Cleaning up previous bundle installation..."
 rm -rf .bundle
 rm -rf vendor/bundle
-# [ -f Gemfile.lock ] && rm Gemfile.lock
+[ -f Gemfile.lock ] && rm Gemfile.lock
 bundle clean --force 2>/dev/null || true
 
 # Setup bundler paths
@@ -32,9 +32,9 @@ echo "📁 Setting up test environment..."
 mkdir -p spec/config
 
 # Copy configuration template if it doesn't exist
-if [ ! -f spec/config/aerospike_service.yml ]; then
+if [ ! -f spec/config/redis_service.yml ]; then
   echo "📄 Creating test configuration..."
-  cp lib/aerospike_service/templates/aerospike_service.yml spec/config/
+  cp lib/redis_service/templates/redis_service.yml spec/config/
 fi
 
 echo ""
@@ -44,4 +44,4 @@ echo "🧪 To run tests: bundle exec rspec"
 echo "🔍 To start console: bin/console"
 echo "📚 Read documentation: bundle exec yard server"
 echo ""
-echo "Happy coding! 🎉"
+echo "Happy coding! 🎉" 
