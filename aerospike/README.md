@@ -94,23 +94,6 @@ AerospikeService.increment("counter:visits", "count", 1)
 users = AerospikeService.batch_get(["user:123", "user:456"])
 ```
 
-### Using Records
-
-```ruby
-# Create a record
-record = AerospikeService::Record.new("user:123", { name: "John" }, "users")
-
-# Update a record
-record["email"] = "john@example.com"
-record.save
-
-# Reload data from database
-record.reload
-
-# Delete a record
-record.delete
-```
-
 ### Namespace Shortcuts
 
 Generate namespace shortcuts:

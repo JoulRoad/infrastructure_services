@@ -130,6 +130,36 @@ module AerospikeService
       rescue => e
         raise OperationError, "Error setting record: #{e.message}"
       end
+
+      private
+
+      def convert_boolean_values(opts = {})
+        bins = opts.fetch(:bins)
+        bool_to_string = opts.fetch(:bool_to_string, false)
+
+        case
+        when bins.is_a?(Hash)
+          return bins.map do |bin, value|
+            [bin, convert_boolean_values(bins: value, bool_to_string: bool_to_string)]
+          end.to_h
+        when bins.is_a?(Array)
+          return bins.map { |bin| convert_boolean_values(bins: bin, bool_to_string: bool_to_string) }
+        when bins.is_a?(String)
+          if bins == "true"
+            return bool_to_string ? bins : true
+          elsif bins == "false"
+            return bool_to_string ? bins : false
+          else
+            return bins
+          end
+        when bins == true
+          return bool_to_string ? "true" : bins
+        when bins == false
+          return bool_to_string ? "false" : bins
+        end
+
+        bins
+      end
     end
   end
 end
