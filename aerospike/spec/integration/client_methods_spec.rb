@@ -85,8 +85,8 @@ RSpec.describe "Client Integration" do
       result = AerospikeService.set(key: test_key, value: "just_a_value", setname: setname)
       expect(result).to be true
 
-      record = AerospikeService.get(key: test_key, setname: setname, bins: ["value"])
-      expect(record).to include("value" => "just_a_value")
+      record = AerospikeService.get(key: test_key, setname: setname, bins: ["default"])
+      expect(record).to include("default" => "just_a_value")
     end
 
     it "sets values with symbol keys and converts them to strings" do

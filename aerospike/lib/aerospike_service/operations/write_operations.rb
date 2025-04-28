@@ -47,7 +47,7 @@ module AerospikeService
           write_policy = Aerospike::WritePolicy.new
           write_policy.expiration = expiration
 
-          connection.operate(aerospike_key, [Aerospike::Operation::TOUCH], write_policy)
+          connection.operate(aerospike_key, [Aerospike::Operation.touch], write_policy)
           true
         rescue Aerospike::Exceptions::Aerospike => e
           return false if e.message.include?("not found")
@@ -75,8 +75,15 @@ module AerospikeService
 
         begin
           aerospike_key = Aerospike::Key.new(namespace, setname, key.to_s)
-          operation = Aerospike::Operation.add(Bin.new(bin, incr_by))
-          connection.operate(aerospike_key, [operation], expiration: expiration)
+          operation = Aerospike::Operation.add(Aerospike::Bin.new(bin, incr_by))
+
+          write_policy = nil
+          if expiration
+            write_policy = Aerospike::WritePolicy.new
+            write_policy.expiration = expiration
+          end
+
+          connection.operate(aerospike_key, [operation], write_policy)
           true
         rescue Aerospike::Exceptions::Aerospike => e
           if e.message.include?("Invalid namespace")
