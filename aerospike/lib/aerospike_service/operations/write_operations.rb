@@ -10,11 +10,10 @@ module AerospikeService
       def delete(opts = {})
         key = opts.fetch(:key, nil)
         setname = opts.fetch(:setname, nil)
-
         namespace = opts.fetch(:namespace, current_namespace)
-        connection = connection_for_namespace(namespace)
 
         begin
+          connection = connection_for_namespace(namespace)
           aerospike_key = Aerospike::Key.new(namespace, setname, key.to_s)
           connection.delete(aerospike_key)
         rescue Aerospike::Exceptions::Aerospike => e
@@ -35,11 +34,10 @@ module AerospikeService
         key = opts.fetch(:key, nil)
         setname = opts.fetch(:setname, nil)
         expiration = opts.fetch(:expiration, nil)
-
         namespace = opts.fetch(:namespace, current_namespace)
-        connection = connection_for_namespace(namespace)
 
         begin
+          connection = connection_for_namespace(namespace)
           aerospike_key = Aerospike::Key.new(namespace, setname, key.to_s)
           record = connection.get(aerospike_key)
           return false unless record
@@ -69,11 +67,10 @@ module AerospikeService
         incr_by = opts.fetch(:incr_by, 1)
         setname = opts.fetch(:setname, nil)
         expiration = opts.fetch(:expiration, nil)
-
         namespace = opts.fetch(:namespace, current_namespace)
-        connection = connection_for_namespace(namespace)
 
         begin
+          connection = connection_for_namespace(namespace)
           aerospike_key = Aerospike::Key.new(namespace, setname, key.to_s)
           operation = Aerospike::Operation.add(Aerospike::Bin.new(bin, incr_by))
 
@@ -102,11 +99,10 @@ module AerospikeService
         value = opts.fetch(:value, nil)
         expiration = opts.fetch(:expiration, -1)
         setname = opts.fetch(:setname, DEFAULT_SETNAME)
-
         namespace = opts.fetch(:namespace, current_namespace)
-        connection = connection_for_namespace(namespace)
 
         begin
+          connection = connection_for_namespace(namespace)
           aerospike_key = Aerospike::Key.new(namespace, setname, key.to_s)
 
           value = value.is_a?(Hash) ? value.transform_keys(&:to_s) : {DEFAULT_BIN_NAME => value}

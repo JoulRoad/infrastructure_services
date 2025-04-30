@@ -12,13 +12,13 @@ module AerospikeService
         setname = opts.fetch(:setname, DEFAULT_SETNAME)
         namespace = opts.fetch(:namespace, current_namespace)
 
-        connection = connection_for_namespace(namespace)
-
         begin
-          aerospike_key = Aerospike::Key.new(namespace, setname, key.to_s)
+          connection = connection_for_namespace(namespace)
+
           options = bins.is_a?(String) ? [bins.to_s] : bins.map(&:to_s)
           options = nil if options.empty?
 
+          aerospike_key = Aerospike::Key.new(namespace, setname, key.to_s)
           record = options ? connection.get(aerospike_key, options) : connection.get(aerospike_key)
           return nil unless record
 
@@ -46,9 +46,8 @@ module AerospikeService
         setname = opts.fetch(:setname, DEFAULT_SETNAME)
         namespace = opts.fetch(:namespace, current_namespace)
 
-        connection = connection_for_namespace(namespace)
-
         begin
+          connection = connection_for_namespace(namespace)
           aerospike_key = Aerospike::Key.new(namespace, setname, key.to_s)
           connection.exists(aerospike_key)
         rescue Aerospike::Exceptions::Aerospike => e
@@ -69,15 +68,14 @@ module AerospikeService
         key = opts.fetch(:key, nil)
         bin = opts.fetch(:bin, DEFAULT_BIN_NAME)
         setname = opts.fetch(:setname, DEFAULT_SETNAME)
+        namespace = opts.fetch(:namespace, current_namespace)
         begin_token = opts.fetch(:begin_token, nil)
         count = opts.fetch(:count, nil)
         expiration = opts.fetch(:expiration, nil)
         return_type = opts.fetch(:return_type, Aerospike::CDT::MapReturnType::KEY_VALUE)
 
-        namespace = opts.fetch(:namespace, current_namespace)
-        connection = connection_for_namespace(namespace)
-
         begin
+          connection = connection_for_namespace(namespace)
           aerospike_key = Aerospike::Key.new(namespace, setname, key.to_s)
           operation = Aerospike::CDT::MapOperation.get_by_rank_range(
             bin, begin_token, count, return_type: return_type
