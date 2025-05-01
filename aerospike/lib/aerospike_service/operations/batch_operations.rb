@@ -15,7 +15,7 @@ module AerospikeService
 
         begin
           keys.each_slice(batch_size) do |batch|
-            results += mget_all(opts.merge({ keys: batch }))
+            results += mget_all(opts.merge({keys: batch}))
           end
           results
         rescue => e
