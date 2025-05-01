@@ -28,13 +28,3 @@ RSpec.configure do |config|
     AerospikeService.load_configuration(file_path: config_file) if File.exist?(config_file)
   end
 end
-
-# Helper for cleaning up test data
-def clean_test_data(namespace = nil)
-  namespaces = namespace ? [namespace] : AerospikeService.configuration.namespaces
-
-  namespaces.each do |ns|
-    # Delete any test keys
-    # Implementation depends on your test approach
-  end
-end
