@@ -65,10 +65,11 @@ RSpec.describe "Client Integration" do
       AerospikeService.set(key: test_keys[0], setname: setname, value: {"index" => 0})
       AerospikeService.set(key: test_keys[1], setname: setname, value: {"index" => 1})
 
-      results = AerospikeService.batch_get(keys: test_keys, setname: setname)
-      expect(results).to be_a(Hash)
-      expect(results[test_keys[0]]).to include("index" => 0)
-      expect(results[test_keys[1]]).to include("index" => 1)
+      results = AerospikeService.mget(keys: test_keys, setname: setname)
+      puts "Results: #{results.inspect}"
+      expect(results).to be_an(Array)
+      expect(results[0]).to include("index" => 0)
+      expect(results[1]).to include("index" => 1)
     end
   end
 
