@@ -3,21 +3,27 @@
 module AerospikeService
   module Operations
     module ReadOperations
-      def get(key:, namespace: nil, bin: nil)
-        namespace ||= current_namespace
-        connection = connection_for_namespace(namespace)
+      DEFAULT_SETNAME = "default"
+      DEFAULT_BIN_NAME = "default"
 
-        key_str = key.to_s
-
-        aerospike_key = Aerospike::Key.new(namespace, "test", key_str)
-        options = bin ? [bin.to_s] : nil
+      def get(opts = {})
+        key = opts.fetch(:key, nil)
+        bins = opts.fetch(:bins, [])
+        setname = opts.fetch(:setname, DEFAULT_SETNAME)
+        namespace = opts.fetch(:namespace, current_namespace)
 
         begin
+          connection = connection_for_namespace(namespace)
+
+          options = bins.is_a?(String) ? [bins.to_s] : bins.map(&:to_s)
+          options = nil if options.empty?
+
+          aerospike_key = Aerospike::Key.new(namespace, setname, key.to_s)
           record = options ? connection.get(aerospike_key, options) : connection.get(aerospike_key)
           return nil unless record
 
-          if bin && record.bins.key?(bin.to_s)
-            record.bins[bin.to_s]
+          if bins.is_a?(String) && record.bins.key?(bins.to_s)
+            record.bins[bins.to_s]
           else
             record.bins
           end
@@ -35,15 +41,14 @@ module AerospikeService
         end
       end
 
-      def exists?(key:, namespace: nil)
-        namespace ||= current_namespace
-        connection = connection_for_namespace(namespace)
-
-        key_str = key.to_s
-
-        aerospike_key = Aerospike::Key.new(namespace, "test", key_str)
+      def exists?(opts = {})
+        key = opts.fetch(:key, nil)
+        setname = opts.fetch(:setname, DEFAULT_SETNAME)
+        namespace = opts.fetch(:namespace, current_namespace)
 
         begin
+          connection = connection_for_namespace(namespace)
+          aerospike_key = Aerospike::Key.new(namespace, setname, key.to_s)
           connection.exists(aerospike_key)
         rescue Aerospike::Exceptions::Aerospike => e
           return false if e.message.include?("not found")
@@ -59,18 +64,39 @@ module AerospikeService
         end
       end
 
-      def record(key:, namespace: nil)
-        namespace ||= current_namespace
-        bins = get(key: key, namespace: namespace)
-        return nil unless bins
+      def by_rank_range_map_bin(opts = {})
+        key = opts.fetch(:key, nil)
+        bin = opts.fetch(:bin, DEFAULT_BIN_NAME)
+        setname = opts.fetch(:setname, DEFAULT_SETNAME)
+        namespace = opts.fetch(:namespace, current_namespace)
+        begin_token = opts.fetch(:begin_token, nil)
+        count = opts.fetch(:count, nil)
+        expiration = opts.fetch(:expiration, nil)
+        return_type = opts.fetch(:return_type, Aerospike::CDT::MapReturnType::KEY_VALUE)
 
-        Models::Record.new(key: key, bins: bins, namespace: namespace)
-      end
+        begin
+          connection = connection_for_namespace(namespace)
+          aerospike_key = Aerospike::Key.new(namespace, setname, key.to_s)
+          operation = Aerospike::CDT::MapOperation.get_by_rank_range(
+            bin, begin_token, count, return_type: return_type
+          )
+          result = connection.operate(aerospike_key, [operation], expiration: expiration)
 
-      private
+          values = result&.bins&.[](bin)
+          return ((return_type == Aerospike::CDT::MapReturnType::KEY_VALUE) ? {} : []) if values.nil?
+          return values unless values.is_a?(Hash)
 
-      def current_namespace
-        raise NotImplementedError, "Subclasses must implement #current_namespace"
+          values.map { |k, v| [k, -v] }
+        rescue Aerospike::Exceptions::Aerospike => e
+          if e.message.include?("Invalid namespace")
+            warn "Warning: Invalid namespace '#{namespace}'. Please check your Aerospike configuration."
+            return ((return_type == Aerospike::CDT::MapReturnType::KEY_VALUE) ? {} : [])
+          end
+
+          raise OperationError, "Error performing by_rank_range_map_bin: #{e.message}"
+        rescue => e
+          raise OperationError, "Error performing by_rank_range_map_bin: #{e.message}"
+        end
       end
     end
   end
