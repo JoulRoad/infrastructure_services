@@ -2,14 +2,13 @@
 
 RSpec.describe "Namespace Integration" do
   let(:test_key) { "ns-test-#{Time.now.to_i}-#{rand(1000)}" }
-  let(:namespaces) { AerospikeService.configuration.namespaces.keys }
+  let(:namespaces) { AerospikeService.configuration.namespaces }
   let(:namespace1) { namespaces[0] }
   let(:namespace2) { namespaces[1] || namespaces[0] }
 
   before do
-    puts "DEBUG: AerospikeService.configuration.namespaces = #{namespaces.inspect}"
-    puts "DEBUG: namespace1 = #{namespace1.inspect}, namespace2 = #{namespace2.inspect}"
-    skip "Need at least two namespaces" if namespaces.size < 2
+    # Skip tests if not enough namespaces configured
+    skip "This test requires at least one namespace configured" if namespaces.empty?
   end
 
   describe "namespace clients" do
@@ -20,6 +19,7 @@ RSpec.describe "Namespace Integration" do
     end
 
     it "accesses namespaces as methods" do
+      # Only run this test if namespace name is a valid method name
       if namespace1 =~ /^[a-z_][a-zA-Z0-9_]*$/ && namespace1 != "test"
         expect {
           client = AerospikeService.public_send(namespace1.to_sym)
@@ -32,13 +32,16 @@ RSpec.describe "Namespace Integration" do
 
   describe "namespace isolation" do
     it "keeps data separate between namespaces" do
+      # Skip if only one namespace
       skip "This test requires multiple namespaces" if namespaces.size < 2
 
       client1 = AerospikeService.namespace(name: namespace1)
       client2 = AerospikeService.namespace(name: namespace2)
 
+      # Put data in one namespace
       client1.put(key: test_key, bins: {"value" => "namespace1-data"})
 
+      # Should only be available in that namespace
       expect(client1.get(key: test_key)).to include("value" => "namespace1-data")
       expect(client2.get(key: test_key)).to be_nil
     end
