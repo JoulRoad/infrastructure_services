@@ -2,6 +2,8 @@
 
 require "yaml"
 require "erb"
+require 'zk'
+require "ipaddr"
 
 module AerospikeService
   module Configuration
@@ -17,8 +19,64 @@ module AerospikeService
         env = determine_environment
         env_config = all_configs[env] || {}
 
-        apply_config(env_config: env_config, config: config)
+        converted_env_config = convertConfig(env_config)
+        apply_config(env_config: converted_env_config, config: config)
+
         config
+      end
+
+      def convertConfig(config)
+        return config unless config["namespaces"].is_a?(Hash)
+
+        converted = Marshal.load(Marshal.dump(config))
+        converted["namespace_configs"] ||= {}
+
+        zk = ZK.new("127.0.0.1:2181")
+        converted["namespaces"].each do |namespace, details|
+          next unless details.is_a?(Hash) && details["zk_path"]
+          zk_path = details["zk_path"]
+
+          begin
+            raw_data, stat = zk.get(zk_path)
+
+            next if raw_data.nil? || raw_data.empty?
+
+            # NEW: Handle stringified JSON array from ZK
+            if raw_data.strip.start_with?('[')
+              begin
+                seed_array = JSON.parse(raw_data)
+                seed_string = seed_array.join(',') # convert back to "host:port,host:port" string
+              rescue JSON::ParserError => e
+                warn "JSON parsing failed: #{e.message}"
+                seed_string = raw_data
+              end
+            else
+              seed_string = raw_data
+            end
+
+            seedlist = seed_string.split(',').map(&:strip).select do |host_entry|
+              ip = host_entry.split(':').first
+              valid = valid_ip?(ip)
+              valid
+            end
+
+            parsed_hosts = parse_hosts(hosts: seedlist)
+
+            converted["namespace_configs"][namespace] = { "hosts" => parsed_hosts } unless parsed_hosts.empty?
+          rescue => e
+            warn "Failed to fetch or parse seedlist from #{zk_path}: #{e.message}"
+          end
+
+        end
+        zk&.close
+
+        converted
+      end
+
+      def valid_ip?(ip)
+        !!IPAddr.new(ip)
+      rescue IPAddr::InvalidAddressError
+        false
       end
 
       def determine_environment
@@ -51,7 +109,7 @@ module AerospikeService
             host.is_a?(String) ? Config.new.parse_host(host_string: host) : host
           end
         else
-          [{host: "127.0.0.1", port: 3000}]
+          [{ host: "127.0.0.1", port: 3000 }]
         end
       end
     end

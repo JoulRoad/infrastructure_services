@@ -112,6 +112,9 @@ GEM
     unicode-display_width (2.6.0)
     uri (1.0.3)
     yard (0.9.37)
+    zk (1.10.0)
+      zookeeper (~> 1.5.0)
+    zookeeper (1.5.5)
 
 PLATFORMS
   ruby
@@ -125,6 +128,7 @@ DEPENDENCIES
   simplecov (~> 0.22)
   standard (~> 1.35.1)
   yard (~> 0.9)
+  zk
 
 BUNDLED WITH
    2.6.8
