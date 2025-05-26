@@ -2,7 +2,7 @@
 
 require "yaml"
 require "erb"
-require 'zk'
+require "zk"
 require "ipaddr"
 
 module AerospikeService
@@ -37,15 +37,15 @@ module AerospikeService
           zk_path = details["zk_path"]
 
           begin
-            raw_data, stat = zk.get(zk_path)
+            raw_data, _ = zk.get(zk_path)
 
             next if raw_data.nil? || raw_data.empty?
 
             # NEW: Handle stringified JSON array from ZK
-            if raw_data.strip.start_with?('[')
+            if raw_data.strip.start_with?("[")
               begin
                 seed_array = JSON.parse(raw_data)
-                seed_string = seed_array.join(',') # convert back to "host:port,host:port" string
+                seed_string = seed_array.join(",") # convert back to "host:port,host:port" string
               rescue JSON::ParserError => e
                 warn "JSON parsing failed: #{e.message}"
                 seed_string = raw_data
@@ -54,19 +54,19 @@ module AerospikeService
               seed_string = raw_data
             end
 
-            seedlist = seed_string.split(',').map(&:strip).select do |host_entry|
-              ip = host_entry.split(':').first
+            seedlist = seed_string.split(",").map(&:strip).select do |host_entry|
+              ip = host_entry.split(":").first
               valid = valid_ip?(ip)
               valid
             end
 
             parsed_hosts = parse_hosts(hosts: seedlist)
+            puts "seedlist data #{parsed_hosts}"
 
-            converted["namespace_configs"][namespace] = { "hosts" => parsed_hosts } unless parsed_hosts.empty?
+            converted["namespace_configs"][namespace] = {"hosts" => parsed_hosts} unless parsed_hosts.empty?
           rescue => e
             warn "Failed to fetch or parse seedlist from #{zk_path}: #{e.message}"
           end
-
         end
         zk&.close
 
@@ -109,7 +109,7 @@ module AerospikeService
             host.is_a?(String) ? Config.new.parse_host(host_string: host) : host
           end
         else
-          [{ host: "127.0.0.1", port: 3000 }]
+          [{host: "127.0.0.1", port: 3000}]
         end
       end
     end
