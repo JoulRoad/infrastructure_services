@@ -9,7 +9,9 @@ ENV["RACK_ENV"] = "test"
 
 # Load test configuration
 config_file = File.join(File.dirname(__FILE__), "config", "aerospike_service.yml")
-AerospikeService.load_configuration(file_path: config_file) if File.exist?(config_file)
+fallback_file = File.join(File.dirname(__FILE__), "config", "aerospike_switch.yml")
+
+AerospikeService.load_configuration(file_path: config_file, fallback_path: fallback_file) #if File.exist?(config_file)
 
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure
@@ -25,7 +27,7 @@ RSpec.configure do |config|
   # Reset AerospikeService between tests
   config.before(:each) do
     AerospikeService.reset!
-    AerospikeService.load_configuration(file_path: config_file) if File.exist?(config_file)
+    AerospikeService.load_configuration(file_path: config_file, fallback_path: fallback_file) #if File.exist?(config_file)
   end
 end
 

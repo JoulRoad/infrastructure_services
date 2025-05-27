@@ -1,0 +1,22 @@
+test:
+  hosts:
+    - host: 127.0.0.1
+      port: 3000
+  default_namespace: userdata
+  namespaces:
+    - userdata
+    - userdata_nc
+    - userdata_mem_nc
+  connect_timeout: 1.0
+  timeout: 1.0
+  max_retries: 2
+  max_connections: 10
+  namespace_configs:
+    users:
+      hosts:
+        - host: 127.0.0.1
+          port: 3000
+    analytics:
+      hosts:
+        - host: 127.0.0.1
+          port: 3000

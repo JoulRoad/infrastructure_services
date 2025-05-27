@@ -31,11 +31,12 @@ RSpec.describe AerospikeService::Configuration do
   describe AerospikeService::Configuration::Loader do
     let(:loader) { AerospikeService::Configuration::Loader }
     let(:config) { AerospikeService::Configuration::Config.new }
-    let(:config_file) { File.join(File.dirname(__FILE__), "..", "config", "aerospike_service.yml") }
+    let(:config_file) { File  .join(File.dirname(__FILE__), "..", "config", "aerospike_service.yml") }
+    let(:fallback_file) { File.join(File.dirname(__FILE__), "..", "config", "aerospike_switch.yml") }
 
     it "loads configuration from YAML file" do
       if File.exist?(config_file)
-        loader.load(file_path: config_file, config: config)
+        loader.load(file_path: config_file, fallback_path: fallback_file, config: config)
 
         expect(config.hosts).to be_an(Array)
         expect(config.namespaces).to be_an(Array)
@@ -45,7 +46,7 @@ RSpec.describe AerospikeService::Configuration do
 
     it "raises error when file not found" do
       expect {
-        loader.load(file_path: "nonexistent.yml", config: config)
+        loader.load(file_path: "nonexistent.yml", fallback_path: "nonexistent_fallback.yml", config: config)
       }.to raise_error(AerospikeService::ConfigError)
     end
   end
