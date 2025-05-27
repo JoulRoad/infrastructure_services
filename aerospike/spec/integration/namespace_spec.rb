@@ -32,7 +32,6 @@ RSpec.describe "Namespace Integration" do
 
   describe "namespace isolation" do
     it "keeps data separate between namespaces" do
-
       client1 = AerospikeService.namespace(name: namespace1)
       client2 = AerospikeService.namespace(name: namespace2)
 
