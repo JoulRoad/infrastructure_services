@@ -10,7 +10,7 @@ module AerospikeService
     module Loader
       module_function
 
-      def load(file_path:, fallback_path: nil, config:)
+      def load(file_path:, config:, fallback_path: nil)
         env = determine_environment
 
         zk_connected = false
@@ -28,7 +28,7 @@ module AerospikeService
 
         raise ConfigError, "Configuration file not found: #{active_file}" unless active_file && File.exist?(active_file)
 
-        puts "data loaded from: #{use_zk_file ? 'zookeepr' : 'yaml'} (#{active_file})"
+        puts "data loaded from: #{use_zk_file ? "zookeepr" : "yaml"} (#{active_file})"
 
         yaml_content = ERB.new(File.read(active_file)).result
         all_configs = YAML.safe_load(yaml_content)
@@ -44,7 +44,6 @@ module AerospikeService
         apply_config(env_config: converted_env_config, config: config)
         config
       end
-
 
       def convertConfig(config)
         return config unless config["namespaces"].is_a?(Hash)
@@ -84,7 +83,7 @@ module AerospikeService
             parsed_hosts = parse_hosts(hosts: seedlist)
 
             unless parsed_hosts.empty?
-              converted["namespace_configs"][namespace] = { "hosts" => parsed_hosts }
+              converted["namespace_configs"][namespace] = {"hosts" => parsed_hosts}
             end
           rescue => e
             warn "Failed to fetch or parse seedlist from #{zk_path}: #{e.message}"
@@ -96,7 +95,6 @@ module AerospikeService
         puts "converted is #{converted}"
         converted
       end
-
 
       def valid_ip?(ip)
         !!IPAddr.new(ip)

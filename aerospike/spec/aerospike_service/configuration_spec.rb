@@ -31,7 +31,7 @@ RSpec.describe AerospikeService::Configuration do
   describe AerospikeService::Configuration::Loader do
     let(:loader) { AerospikeService::Configuration::Loader }
     let(:config) { AerospikeService::Configuration::Config.new }
-    let(:config_file) { File  .join(File.dirname(__FILE__), "..", "config", "aerospike_service.yml") }
+    let(:config_file) { File.join(File.dirname(__FILE__), "..", "config", "aerospike_service.yml") }
     let(:fallback_file) { File.join(File.dirname(__FILE__), "..", "config", "aerospike_switch.yml") }
 
     it "loads configuration from YAML file" do
