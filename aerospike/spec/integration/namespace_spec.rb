@@ -44,13 +44,12 @@ RSpec.describe "Namespace Integration" do
       key1 = Aerospike::Key.new(namespace1, "testset", "isolation-key")
       key2 = Aerospike::Key.new(namespace2, "testset", "isolation-key")
 
-      client1.put(key: key1, bins: { "value" => "namespace1-data" })
+      client1.put(key: key1, bins: {"value" => "namespace1-data"})
 
       expect(client1.get(key: key1)).to include("value" => "namespace1-data")
       expect(client2.get(key: key2)).to be_nil
     end
   end
-
 
   describe "namespace operations" do
     it "supports all operations with namespaces" do
