@@ -32,20 +32,25 @@ RSpec.describe "Namespace Integration" do
 
   describe "namespace isolation" do
     it "keeps data separate between namespaces" do
-      # Skip if only one namespace
-      skip "This test requires multiple namespaces" if namespaces.size < 2
+      namespace1 = "userdata"
+      namespace2 = "userdata_nc"
 
       client1 = AerospikeService.namespace(name: namespace1)
       client2 = AerospikeService.namespace(name: namespace2)
 
-      # Put data in one namespace
-      client1.put(key: test_key, bins: {"value" => "namespace1-data"})
+      puts "[DEBUG] client1: #{client1.inspect}"
+      puts "[DEBUG] client2: #{client2.inspect}"
 
-      # Should only be available in that namespace
-      expect(client1.get(key: test_key)).to include("value" => "namespace1-data")
-      expect(client2.get(key: test_key)).to be_nil
+      key1 = Aerospike::Key.new(namespace1, "testset", "isolation-key")
+      key2 = Aerospike::Key.new(namespace2, "testset", "isolation-key")
+
+      client1.put(key: key1, bins: { "value" => "namespace1-data" })
+
+      expect(client1.get(key: key1)).to include("value" => "namespace1-data")
+      expect(client2.get(key: key2)).to be_nil
     end
   end
+
 
   describe "namespace operations" do
     it "supports all operations with namespaces" do

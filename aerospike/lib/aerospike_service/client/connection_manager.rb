@@ -43,6 +43,7 @@ module AerospikeService
         rescue => e
           raise ConnectionError, "Failed to connect to Aerospike cluster: #{e.message}"
         end
+
       end
     end
   end

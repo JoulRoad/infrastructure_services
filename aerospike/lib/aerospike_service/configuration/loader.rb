@@ -41,11 +41,10 @@ module AerospikeService
 
             next if raw_data.nil? || raw_data.empty?
 
-            # NEW: Handle stringified JSON array from ZK
             if raw_data.strip.start_with?("[")
               begin
                 seed_array = JSON.parse(raw_data)
-                seed_string = seed_array.join(",") # convert back to "host:port,host:port" string
+                seed_string = seed_array.join(",")
               rescue JSON::ParserError => e
                 warn "JSON parsing failed: #{e.message}"
                 seed_string = raw_data
@@ -61,7 +60,6 @@ module AerospikeService
             end
 
             parsed_hosts = parse_hosts(hosts: seedlist)
-            puts "seedlist data #{parsed_hosts}"
 
             converted["namespace_configs"][namespace] = {"hosts" => parsed_hosts} unless parsed_hosts.empty?
           rescue => e
@@ -92,7 +90,7 @@ module AerospikeService
       def apply_config(env_config:, config:)
         config.hosts = parse_hosts(hosts: env_config["hosts"]) if env_config["hosts"]
         config.default_namespace = env_config["default_namespace"] if env_config["default_namespace"]
-        config.namespaces = env_config["namespaces"] if env_config["namespaces"]
+        config.namespaces = env_config["namespaces"].keys if env_config["namespaces"]
         config.namespace_configs = env_config["namespace_configs"] || {}
         config.connect_timeout = env_config["connect_timeout"].to_f if env_config["connect_timeout"]
         config.timeout = env_config["timeout"].to_f if env_config["timeout"]
