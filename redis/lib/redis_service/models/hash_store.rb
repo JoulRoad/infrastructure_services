@@ -37,6 +37,7 @@ module RedisService
       def field_exists?(hash_key, field)
         all(hash_key).key?(field.to_s)
       end
+      \
 
       def increment(hash_key, field, amount = 1)
         current = get(hash_key, field).to_i

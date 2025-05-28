@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "redis"
-require "hiredis"
+require "hiredis-client"
 require "connection_pool"
 
 module RedisService

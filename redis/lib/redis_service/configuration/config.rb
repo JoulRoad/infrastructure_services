@@ -7,7 +7,7 @@ module RedisService
     class Config
       attr_accessor :host, :port, :db, :password, :read_url, :write_url,
                     :timeout, :connect_timeout, :read_timeout, :write_timeout,
-                    :reconnect_attempts, :reconnect_delay, :ssl,
+                    :reconnect_attempts,:ssl,
                     :ssl_params, :pool_size, :pool_timeout,
                     :driver
 
@@ -23,12 +23,12 @@ module RedisService
         @read_timeout = 5.0
         @write_timeout = 5.0
         @reconnect_attempts = 3
-        @reconnect_delay = 0.5
+        # @reconnect_delay = 0.5
         @ssl = false
         @ssl_params = {}
         @pool_size = 5
         @pool_timeout = 5.0
-        @driver = :hiredis  # Default to using hiredis driver
+        @driver = :hiredis_client  # Default to using hiredis driver
         @namespaces = {}
       end
 

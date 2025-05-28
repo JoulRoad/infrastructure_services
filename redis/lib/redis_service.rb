@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "redis"
-require "hiredis"
+require "hiredis-client"
 require "connection_pool"
 require "redis_service/version"
 require "redis_service/errors"
