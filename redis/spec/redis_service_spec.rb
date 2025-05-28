@@ -72,15 +72,17 @@ RSpec.describe RedisService do
       # The hiredis driver should be used regardless of configuration
       client = RedisService.client
       client.with_read_connection do |redis|
-        expect(redis.instance_variable_get(:@client).driver).to eq(:hiredis)
+        connection = redis.instance_variable_get(:@client).instance_variable_get(:@connection)
+        expect(connection.class.name).to include('Hiredis')
       end
-      
+
       client.with_write_connection do |redis|
-        expect(redis.instance_variable_get(:@client).driver).to eq(:hiredis)
+        connection = redis.instance_variable_get(:@client).instance_variable_get(:@connection)
+        expect(connection.class.name).to include('Hiredis')
       end
     end
   end
-  
+
   # Shared examples for testing Redis operations with different URL configurations
   shared_examples "redis operations" do |scenario|
     let(:test_key) { "test_key_#{Time.now.to_i}" }
@@ -420,8 +422,8 @@ RSpec.describe RedisService do
       
       it "executes commands in pipeline" do
         RedisService.client.pipelined do |redis|
-          redis.set(test_key, "pipeline_value")
-          redis.set("#{test_key}_2", "second_value")
+          redis.set(test_key, RedisService::Serialization::JsonSerializer.new.serialize("pipeline_value"))
+          redis.set("#{test_key}_2", RedisService::Serialization::JsonSerializer.new.serialize("second_value"))
         end
         
         if scenario == :separate_urls
