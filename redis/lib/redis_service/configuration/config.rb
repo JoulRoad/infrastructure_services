@@ -9,7 +9,7 @@ module RedisService
                     :timeout, :connect_timeout, :read_timeout, :write_timeout,
                     :reconnect_attempts,:ssl,
                     :ssl_params, :pool_size, :pool_timeout,
-                    :driver
+                    :driver,:namespaces
 
       def initialize
         @host = "localhost"
