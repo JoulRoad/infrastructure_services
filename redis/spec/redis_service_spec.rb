@@ -374,8 +374,8 @@ RSpec.describe RedisService do
         orders = RedisService.namespace("orders")
         
         # Set keys in each namespace
-        users.set("123", { name: "Alice" })
-        orders.set("123", { product: "Gadget" })
+        users.keys.set("123", { name: "Alice" })
+        orders.keys.set("123", { product: "Gadget" })
         
         if scenario == :separate_urls
           # Sync namespace data
@@ -393,8 +393,8 @@ RSpec.describe RedisService do
         end
         
         # Keys with the same ID in different namespaces should have different values
-        expect(users.get("123")).to eq({ "name" => "Alice" })
-        expect(orders.get("123")).to eq({ "product" => "Gadget" })
+        expect(users.keys.get("123")).to eq({ "name" => "Alice" })
+        expect(orders.keys.get("123")).to eq({ "product" => "Gadget" })
       end
     end
     
