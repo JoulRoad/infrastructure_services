@@ -23,7 +23,7 @@ module RedisService
       end
 
       def set(key, value, **options)
-        client.keys.set(key, value, options)
+        client.keys.set(key, value, **options)
       end
 
       def delete(key)

@@ -441,7 +441,8 @@ RSpec.describe RedisService do
     
     describe "helper models" do
       it "provides a key-value store model" do
-        kv_store = RedisService.key_value_store
+        redis_client = RedisService.client
+        kv_store = RedisService::Models::KeyValueStore.new(redis_client)
         
         kv_store["user"] = { name: "Eve" }
         
@@ -458,7 +459,8 @@ RSpec.describe RedisService do
       end
       
       it "provides a hash store model" do
-        hash_store = RedisService.hash_store
+        redis_client = RedisService.client
+        hash_store = RedisService::Models::HashStore.new(redis_client)
         
         hash_store.set("profiles", "user1", { role: "admin" })
         
