@@ -1,7 +1,7 @@
-require_relative 'base_config'
-require 'yaml'
-require 'zk'
-require 'json'
+require_relative "base_config"
+require "yaml"
+require "zk"
+require "json"
 require "ipaddr"
 require "erb"
 
@@ -9,7 +9,6 @@ require "erb"
 
 module Config
   class ZookeeperConfig < BaseConfig
-
     def should_convert?
       config = YAML.load_file(config_file)
       config.key?("namespaces") && config["namespaces"].is_a?(Hash)
@@ -50,7 +49,7 @@ module Config
           seedlist = seed_string.split(",").map(&:strip).select { |host| valid_ip?(host.split(":").first) }
           parsed_hosts = parse_hosts(hosts: seedlist)
 
-          converted["namespace_configs"][namespace] = { "hosts" => parsed_hosts } unless parsed_hosts.empty?
+          converted["namespace_configs"][namespace] = {"hosts" => parsed_hosts} unless parsed_hosts.empty?
         rescue => e
           warn "Failed to parse seedlist for #{namespace}: #{e.message}"
         end
@@ -63,7 +62,9 @@ module Config
     private
 
     def valid_ip?(ip)
-      !!IPAddr.new(ip) rescue false
+      !!IPAddr.new(ip)
+    rescue
+      false
     end
 
     def parse_hosts(hosts:)

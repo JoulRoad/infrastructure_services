@@ -54,13 +54,11 @@ module AerospikeService
         env = determine_environment
         env_config = all_configs[env] || {}
 
-        #configuration check to be applied here
+        # configuration check to be applied here
 
         apply_config(env_config: env_config, config: config)
         config
       end
-
-
 
       # def convertConfig(config)
       #   return config unless config["namespaces"].is_a?(Hash)

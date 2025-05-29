@@ -1,9 +1,8 @@
-require 'yaml'
-require_relative 'base_config'
+require "yaml"
+require_relative "base_config"
 
 module Config
   class YMLConfig < BaseConfig
-
     def should_convert?
       config = YAML.load_file(config_file)
       config.key?("namespaces") && config["namespaces"].is_a?(Array)

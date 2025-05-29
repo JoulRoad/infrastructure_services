@@ -3,17 +3,17 @@
 require "bundler/setup"
 require "aerospike_service"
 require "yaml"
-require '../lib/aerospike_service'
-require '../lib/aerospike_service/config/config_selector'
+require "../lib/aerospike_service"
+require "../lib/aerospike_service/config/config_selector"
 
 # Configure for testing
 ENV["RACK_ENV"] = "test"
 
 # Load test configuration
-#config_file = File.join(File.dirname(__FILE__), "config", "aerospike_service.yml")
-#fallback_file = File.join(File.dirname(__FILE__), "config", "aerospike_static.yml")
+# config_file = File.join(File.dirname(__FILE__), "config", "aerospike_service.yml")
+# fallback_file = File.join(File.dirname(__FILE__), "config", "aerospike_static.yml")
 
-mode = 'zookeeper' #yml/zookeepr
+mode = "zookeeper" # yml/zookeepr
 selected_source = Config::ConfigSelector.setup(mode)
 
 if selected_source.should_convert?
@@ -43,7 +43,7 @@ RSpec.configure do |config|
     else
       raise "No valid config"
     end
-    #AerospikeService.load_configuration(file_path: config_file) #if File.exist?(config_file)
+    # AerospikeService.load_configuration(file_path: config_file) #if File.exist?(config_file)
   end
 end
 
