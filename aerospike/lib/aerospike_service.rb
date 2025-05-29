@@ -25,8 +25,8 @@ module AerospikeService
       self
     end
 
-    def load_configuration(file_path:, fallback_path: nil)
-      Configuration::Loader.load(file_path: file_path, fallback_path: fallback_path, config: configuration)
+    def load_configuration(file_path:)
+      Configuration::Loader.load(file_path: file_path, config: configuration)
       self
     end
 

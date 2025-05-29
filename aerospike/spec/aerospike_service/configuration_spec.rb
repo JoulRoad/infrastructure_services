@@ -32,7 +32,7 @@ RSpec.describe AerospikeService::Configuration do
     let(:loader) { AerospikeService::Configuration::Loader }
     let(:config) { AerospikeService::Configuration::Config.new }
     let(:config_file) { File  .join(File.dirname(__FILE__), "..", "config", "aerospike_service.yml") }
-    let(:fallback_file) { File.join(File.dirname(__FILE__), "..", "config", "aerospike_switch.yml") }
+    let(:fallback_file) { File.join(File.dirname(__FILE__), "..", "config", "aerospike_static.yml") }
 
     it "loads configuration from YAML file" do
       if File.exist?(config_file)
