@@ -137,7 +137,7 @@ module RedisService
       def zadd(key, score, member)
         serialized = @client.serializer.serialize(member)
         @client.with_write_connection do |redis|
-          redis.zadd(@client.namespaced_key(key), score, serialized) > 0
+          redis.zadd(@client.namespaced_key(key), score, serialized)
         end
       rescue Redis::BaseError => e
         @client.handle_redis_error("zadd", e)

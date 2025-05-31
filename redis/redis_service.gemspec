@@ -36,8 +36,8 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   # Runtime dependencies
-  spec.add_dependency "redis", "~> 5.0"       # Standard Redis client
-  spec.add_dependency "hiredis", "~> 0.6"     # Fast C-based Redis protocol parser
+  spec.add_dependency "redis", "~> 5.0"  # Standard Redis client
+  spec.add_dependency "hiredis-client", "~> 0.22"     # Fast C-based Redis protocol parser
   spec.add_dependency "connection_pool", "~> 2.4"
   spec.add_dependency "activesupport", ">= 6.1", "< 9.0" # Required for Rails integration
 

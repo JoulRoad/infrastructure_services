@@ -61,7 +61,8 @@ RSpec.describe RedisService::Serialization do
       end
 
       it 'raises SerializationError for non-serializable objects' do
-        non_serializable = Object.new
+        non_serializable = []
+        non_serializable << non_serializable
         expect { serializer.serialize(non_serializable) }.to raise_error(RedisService::SerializationError)
       end
     end
@@ -130,7 +131,7 @@ RSpec.describe RedisService::Serialization do
     end
 
     it 'serializes values when stored' do
-      client.set('test_key', { test: 'value' })
+      client.keys.set('test_key', { test: 'value' })
       
       # Use write connection to retrieve the raw value since it was just written
       raw_value = client.with_write_connection do |redis|
@@ -151,15 +152,15 @@ RSpec.describe RedisService::Serialization do
         redis.set("#{namespace}:test_key", '{"test":"value"}')
       end
       
-      expect(client.get('test_key')).to eq({ 'test' => 'value' })
+      expect(client.keys.get('test_key')).to eq({ 'test' => 'value' })
     end
 
     it 'demonstrates read/write separation with serialized values' do
       # Write a serialized value
-      client.set('complex_key', { nested: { data: [1, 2, 3] } })
+      client.keys.set('complex_key', { nested: { data: [1, 2, 3] } })
       
       # Should not be available immediately on read connection
-      expect(client.get('complex_key')).to be_nil
+      expect(client.keys.get('complex_key')).to be_nil
       
       # Manually sync to read database
       serialized_value = client.with_write_connection do |redis|
@@ -171,19 +172,19 @@ RSpec.describe RedisService::Serialization do
       end
       
       # Now it should be available
-      expect(client.get('complex_key')).to eq({ 'nested' => { 'data' => [1, 2, 3] } })
+      expect(client.keys.get('complex_key')).to eq({ 'nested' => { 'data' => [1, 2, 3] } })
     end
 
     it 'handles nil values' do
-      expect(client.get('non_existent_key')).to be_nil
-      client.set('nil_key', nil)
+      expect(client.keys.get('non_existent_key')).to be_nil
+      client.keys.set('nil_key', nil)
       
       # Manually sync nil value (which should be nil in Redis as well)
       client.with_read_connection do |redis|
         redis.set("#{namespace}:nil_key", client.with_write_connection { |r| r.get("#{namespace}:nil_key") })
       end
       
-      expect(client.get('nil_key')).to be_nil
+      expect(client.keys.get('nil_key')).to be_nil
     end
   end
 end 

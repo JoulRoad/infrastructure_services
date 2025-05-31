@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "redis"
-require "hiredis"
+require "hiredis-client"
 require "connection_pool"
 
 module RedisService
@@ -47,10 +47,10 @@ module RedisService
       # Close all connections
       def close_all
         @mutex.synchronize do
-          @read_pools.each_value(&:shutdown)
+          @read_pools.each_value { |pool| pool.shutdown { |conn| conn&.close } }
           @read_pools.clear
-          
-          @write_pools.each_value(&:shutdown)
+
+          @write_pools.each_value { |pool| pool.shutdown { |conn| conn&.close } } if @write_pools
           @write_pools.clear
         end
       end
@@ -92,7 +92,7 @@ module RedisService
           read_timeout: config.read_timeout,
           write_timeout: config.write_timeout,
           reconnect_attempts: config.reconnect_attempts,
-          reconnect_delay: config.reconnect_delay,
+          #reconnect_delay: config.reconnect_delay,
           ssl: config.ssl,
           ssl_params: config.ssl_params
         }
