@@ -28,7 +28,7 @@ module RedisService
         @ssl_params = {}
         @pool_size = 5
         @pool_timeout = 5.0
-        @driver = :hiredis_client  # Default to using hiredis driver
+        @driver = :hiredis  # Default to using hiredis driver
         @namespaces = {}
       end
 

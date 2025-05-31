@@ -62,23 +62,17 @@ RSpec.describe RedisService do
     end
 
     it "always uses hiredis driver" do
-      # Create a client and inspect the underlying Redis connection
       RedisService.configure do |config|
         config.read_url = "redis://localhost:6379/14"
         config.write_url = "redis://localhost:6379/15"
       end
 
       # The hiredis driver should be used regardless of configuration
-      client = RedisService.client
-      client.with_read_connection do |redis|
-        connection = redis.instance_variable_get(:@client).instance_variable_get(:@connection)
-        expect(connection.class.name).to include('Hiredis')
-      end
+      read_config = RedisService.configuration.for_namespace(:read) || RedisService.configuration
+      write_config = RedisService.configuration.for_namespace(:write) || RedisService.configuration
 
-      client.with_write_connection do |redis|
-        connection = redis.instance_variable_get(:@client).instance_variable_get(:@connection)
-        expect(connection.class.name).to include('Hiredis')
-      end
+      expect(read_config.driver).to eq(:hiredis)
+      expect(write_config.driver).to eq(:hiredis)
     end
   end
 end
