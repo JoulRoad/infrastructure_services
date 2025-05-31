@@ -1,23 +1,13 @@
 test:
-  hosts:
-    - host: 127.0.0.1
-      port: 3000
-  default_namespace: test
+  default_namespace: userdata
   namespaces:
-    - test
-    - users
-    - analytics
-    - events
+    userdata:
+      zk_path: "/limeroad/aerospike/userdata"
+    userdata_nc:
+      zk_path: "/limeroad/aerospike/userdata_nc"
+    userdata_mem_nc:
+      zk_path: "/limeroad/aerospike/userdata_mem_nc"
   connect_timeout: 1.0
   timeout: 1.0
   max_retries: 2
   max_connections: 10
-  namespace_configs:
-    users:
-      hosts:
-        - host: 127.0.0.1
-          port: 3000
-    analytics:
-      hosts:
-        - host: 127.0.0.1
-          port: 3000

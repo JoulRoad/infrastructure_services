@@ -36,8 +36,8 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   # Runtime dependencies
-  spec.add_dependency "aerospike", "~> 2.7.0"  # Aerospike Ruby client
-  spec.add_dependency "activesupport", ">= 6.1", "< 9.0"  # For ActiveSupport features
+  spec.add_dependency "aerospike", "~> 2.7.0" # Aerospike Ruby client
+  spec.add_dependency "activesupport", ">= 6.1", "< 9.0" # For ActiveSupport features
 
   # Development dependencies
   spec.add_development_dependency "bundler", "~> 2.4"
@@ -50,6 +50,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "standard", "~> 1.35.1"
   spec.add_development_dependency "yard", "~> 0.9"
   spec.add_development_dependency "pry", "~> 0.14"
+  spec.add_development_dependency "zk"
 
   spec.post_install_message = <<~MESSAGE
     Thanks for installing AerospikeService!
